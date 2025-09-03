@@ -357,72 +357,75 @@ export function BannerEditor({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6">
       <div
-        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative min-h-[60vh]"
-        ref={editorWrapperRef}
+        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg relative min-h-[60vh]"
       >
-        <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
-          <div
-            id="banner-container"
-            ref={containerRef}
-            className="relative overflow-hidden shadow-lg bg-card rounded-lg flex-shrink-0"
-            style={{
-              width: bannerDimensions.width,
-              height: bannerDimensions.height,
-              transform: `scale(${zoom})`,
-              transformOrigin: 'center center',
-            }}
-            onClick={() => setSelectedElementId(null)}
-          >
-            {bannerImage ? (
-              <Image
-                src={bannerImage}
-                alt="Banner background"
-                fill
-                className="object-cover"
-                data-ai-hint="social media banner"
-                unoptimized
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-muted">
-                <div className="text-center text-muted-foreground p-4">
-                  <ImagePlus className="mx-auto h-12 w-12" />
-                  <p className="mt-2 text-sm md:text-base">
-                    Upload a banner to get started
-                  </p>
+        <div className="flex-1 w-full h-full flex items-center justify-center p-4 overflow-hidden" ref={editorWrapperRef}>
+            <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
+            <div
+                id="banner-container"
+                ref={containerRef}
+                className="relative overflow-hidden shadow-lg bg-card rounded-lg flex-shrink-0"
+                style={{
+                width: bannerDimensions.width,
+                height: bannerDimensions.height,
+                transform: `scale(${zoom})`,
+                transformOrigin: 'center center',
+                }}
+                onClick={() => setSelectedElementId(null)}
+            >
+                {bannerImage ? (
+                <Image
+                    src={bannerImage}
+                    alt="Banner background"
+                    fill
+                    className="object-cover"
+                    data-ai-hint="social media banner"
+                    unoptimized
+                />
+                ) : (
+                <div className="flex items-center justify-center h-full bg-muted">
+                    <div className="text-center text-muted-foreground p-4">
+                    <ImagePlus className="mx-auto h-12 w-12" />
+                    <p className="mt-2 text-sm md:text-base">
+                        Upload a banner to get started
+                    </p>
+                    </div>
                 </div>
-              </div>
-            )}
+                )}
 
-            {elements.map(element => (
-              <DraggableElement
-                key={element.id}
-                element={element}
-                onSelect={setSelectedElementId}
-                onStartInteraction={handleInteractionStart}
-                isSelected={selectedElement?.id === element.id}
-                bannerDimensions={bannerDimensions}
-              />
-            ))}
-          </div>
-        </DndContext>
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
-          >
-            <ZoomOut />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={fitCanvasToView}>
-            <Maximize />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
-          >
-            <ZoomIn />
-          </Button>
+                {elements.map(element => (
+                <DraggableElement
+                    key={element.id}
+                    element={element}
+                    onSelect={setSelectedElementId}
+                    onStartInteraction={handleInteractionStart}
+                    isSelected={selectedElement?.id === element.id}
+                    bannerDimensions={bannerDimensions}
+                />
+                ))}
+            </div>
+            </DndContext>
+        </div>
+        <div className="flex items-center justify-center w-full p-2 border-t bg-background rounded-b-lg">
+            <div className="flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
+            >
+                <ZoomOut />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={fitCanvasToView}>
+                <Maximize />
+            </Button>
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+            >
+                <ZoomIn />
+            </Button>
+            </div>
         </div>
       </div>
 
