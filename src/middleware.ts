@@ -16,9 +16,9 @@ export async function middleware(request: NextRequest) {
   
   const publicPaths = ['/login', '/download'];
   
-  // Redirect root to /download
+  // Redirect root to /editor
   if (request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/download', request.url));
+    return NextResponse.redirect(new URL('/editor', request.url));
   }
   
   if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
@@ -31,13 +31,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Allow access to the editor (now at /editor) if logged in
-  if(request.nextUrl.pathname.startsWith('/editor')) {
-    return NextResponse.next();
-  }
-
-  // Redirect any other authenticated paths to the editor
-  return NextResponse.redirect(new URL('/editor', request.url));
+  // All other paths are protected and assumed to be part of the editor experience
+  return NextResponse.next();
 }
 
 export const config = {
