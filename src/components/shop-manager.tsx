@@ -81,7 +81,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
       setFormData(initialShopState);
       setLogoPreview(null);
     }
-  }, [isEditing]);
+  }, [isEditing, open]); // Depend on `open` to reset form when sheet re-opens
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -89,7 +89,12 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   };
   
   const handleGroupChange = (value: string) => {
-    setFormData(prev => ({ ...prev, groups: value ? [value] : [] }));
+    // 'none' is a special value to clear the group
+    if (value === 'none') {
+        setFormData(prev => ({ ...prev, groups: [] }));
+    } else {
+        setFormData(prev => ({ ...prev, groups: [value] }));
+    }
   };
 
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +147,13 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   
   const resetForm = () => {
     setIsEditing(null);
+    setFormData(initialShopState);
+    setLogoPreview(null);
+    // This is to reset the file input visually
+    const fileInput = document.getElementById('logo') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   const handleAddGroup = async () => {
@@ -167,7 +179,12 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) {
+        resetForm();
+      }
+    }}>
       <SheetTrigger asChild>
         <Button>
           <Users className="mr-2" /> Manage Shops
@@ -251,13 +268,16 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 <div className="grid w-full items-center gap-1.5">
                   <Label>Groups</Label>
                   <Select
-                    value={(formData.groups && formData.groups[0]) || ''}
+                    value={(formData.groups && formData.groups[0]) || 'none'}
                     onValueChange={handleGroupChange}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Assign to a group" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">
+                        <em>None</em>
+                      </SelectItem>
                       {groups.map(group => (
                         <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
                       ))}
@@ -310,3 +330,5 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
     </Sheet>
   );
 }
+
+    
