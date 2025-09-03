@@ -463,14 +463,14 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background">
       <ClientOnly>
         <Header 
           onClearBanner={clearBanner} 
           onDeleteBanner={() => setIsDeleteAlertOpen(true)} 
         />
       </ClientOnly>
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1">
         <ClientOnly>
           <BannerEditor
             bannerImage={bannerImage}

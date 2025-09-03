@@ -357,9 +357,9 @@ export function BannerEditor({
   const sensors = useSensor(PointerSensor);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-[calc(100vh-81px)]">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6">
       <div
-        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
+        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative min-h-[60vh]"
         ref={editorWrapperRef}
       >
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
@@ -445,157 +445,153 @@ export function BannerEditor({
           </CardHeader>
           <TabsContent
             value="setup"
-            className="flex-1 overflow-y-auto"
+            className="flex-1"
           >
-            <ScrollArea className="h-full pr-6 pl-4 pb-4">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-headline mb-2">Banner</h3>
-                  <Input
-                    id="banner-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerImageUpload}
-                    className="file:text-primary file:font-semibold"
-                  />
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-headline mb-2">Elements</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={() => addElement('logo')}>
-                      <ImagePlus className="mr-2" /> Logo
-                    </Button>
-                    <Button variant="outline" onClick={() => addElement('text')}>
-                      <Type className="mr-2" /> Text
-                    </Button>
-                  </div>
-                </div>
-
-                <LayersPanel
-                  elements={elements}
-                  selectedElementId={selectedElement?.id ?? null}
-                  setSelectedElementId={setSelectedElementId}
-                  removeElement={removeElement}
-                  onDragEnd={handleLayerDragEnd}
+            <div className="px-6 pb-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-headline mb-2">Banner</h3>
+                <Input
+                  id="banner-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerImageUpload}
+                  className="file:text-primary file:font-semibold"
                 />
-
-                {selectedElement && (
-                  <ElementInspector
-                    element={selectedElement}
-                    updateElement={updateElement}
-                  />
-                )}
               </div>
-            </ScrollArea>
+
+              <div>
+                <h3 className="text-lg font-headline mb-2">Elements</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => addElement('logo')}>
+                    <ImagePlus className="mr-2" /> Logo
+                  </Button>
+                  <Button variant="outline" onClick={() => addElement('text')}>
+                    <Type className="mr-2" /> Text
+                  </Button>
+                </div>
+              </div>
+
+              <LayersPanel
+                elements={elements}
+                selectedElementId={selectedElement?.id ?? null}
+                setSelectedElementId={setSelectedElementId}
+                removeElement={removeElement}
+                onDragEnd={handleLayerDragEnd}
+              />
+
+              {selectedElement && (
+                <ElementInspector
+                  element={selectedElement}
+                  updateElement={updateElement}
+                />
+              )}
+            </div>
           </TabsContent>
           <TabsContent
             value="send"
-            className="flex-1 flex flex-col px-4 md:px-6 pb-6 overflow-y-auto"
+            className="flex-1 flex flex-col"
           >
-            <ScrollArea className="h-full pr-2">
-              <div className="space-y-6 flex-1 flex flex-col">
-                <div>
-                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
-                    <Users />
-                    Recipients
-                  </h3>
-                  <RecipientsPanel
-                    groups={groups}
-                    shops={shops}
-                    selectedGroups={selectedGroups}
-                    setSelectedGroups={setSelectedGroups}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
-                    <FileSignature />
-                    Email Subject
-                  </h3>
-                  <Input
-                    placeholder="Enter your email subject..."
-                    value={emailSubject}
-                    onChange={e => setEmailSubject(e.target.value)}
-                  />
-                </div>
-                <div className="flex-1 flex flex-col min-h-0">
-                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
-                    <Mail />
-                    Email Body
-                  </h3>
-                  <Textarea
-                    placeholder="Enter your email content here..."
-                    className="flex-1"
-                    value={emailBody}
-                    onChange={e => setEmailBody(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    <span className="text-xs text-muted-foreground mr-1">
-                      Available placeholders:
-                    </span>
-                    {emailPlaceholders.map(p => (
-                      <Badge variant="secondary" key={p} className="cursor-default">
-                        {p}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  <Button
-                    size="lg"
-                    onClick={handleSend}
-                    disabled={isSending}
-                    className="w-full"
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2" /> Send as Email Attachment
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={handleShare}
-                    disabled={isSending}
-                    className="w-full"
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="mr-2" /> Push to Download
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={handleDownload}
-                    disabled={isSending}
-                    className="w-full"
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="mr-2" /> Download All as ZIP
-                      </>
-                    )}
-                  </Button>
+            <div className="px-6 pb-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <Users />
+                  Recipients
+                </h3>
+                <RecipientsPanel
+                  groups={groups}
+                  shops={shops}
+                  selectedGroups={selectedGroups}
+                  setSelectedGroups={setSelectedGroups}
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <FileSignature />
+                  Email Subject
+                </h3>
+                <Input
+                  placeholder="Enter your email subject..."
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <Mail />
+                  Email Body
+                </h3>
+                <Textarea
+                  placeholder="Enter your email content here..."
+                  className="min-h-[120px]"
+                  value={emailBody}
+                  onChange={e => setEmailBody(e.target.value)}
+                />
+              </div>
+              <div>
+                <div className="flex flex-wrap gap-1 pt-1">
+                  <span className="text-xs text-muted-foreground mr-1">
+                    Available placeholders:
+                  </span>
+                  {emailPlaceholders.map(p => (
+                    <Badge variant="secondary" key={p} className="cursor-default">
+                      {p}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-            </ScrollArea>
+              <div className="grid grid-cols-1 gap-2 mt-4">
+                <Button
+                  size="lg"
+                  onClick={handleSend}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2" /> Send as Email Attachment
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="mr-2" /> Push to Download
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleDownload}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2" /> Download All as ZIP
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </Card>
