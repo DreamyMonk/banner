@@ -85,13 +85,6 @@ function generateEmailHTML(shopName: string, emailBody: string): string {
                 line-height: 1.5;
                 color: #333333;
             }
-            .banner-image {
-                width: 100%;
-                max-width: 600px;
-                height: auto;
-                margin-top: 20px;
-                border-radius: 4px;
-            }
             .footer {
                 margin-top: 20px;
                 font-size: 12px;
@@ -105,7 +98,6 @@ function generateEmailHTML(shopName: string, emailBody: string): string {
             <div class="content">
                 ${personalizedBody}
             </div>
-            <img src="cid:banner.png" alt="Personalized Banner" class="banner-image" />
             <p class="footer">Powered by Banners from Zedsu</p>
         </div>
     </body>
