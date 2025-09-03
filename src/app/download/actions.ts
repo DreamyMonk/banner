@@ -18,7 +18,7 @@ export async function getBannerForPhone(phone: string): Promise<{ name: string; 
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { error: 'No banner found for this phone number, or a newer link has been generated.' };
+      return { error: 'No banner is available for this phone number.' };
     }
 
     const docData = querySnapshot.docs[0].data();
