@@ -107,6 +107,10 @@ export async function sendBannersByEmail(
         if (!shop.bannerDataUri) {
           throw new Error(`Banner for ${shop.name} is missing.`);
         }
+        if (!shop.email) {
+          console.warn(`Email missing for shop ${shop.name}, skipping.`);
+          return { success: false, shopName: shop.name, error: "Email address is missing." };
+        }
 
         const personalizedSubject = emailSubject
           .replace(/{{shopName}}/g, shop.name)
@@ -179,7 +183,8 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
         shops.map(async shop => {
         try {
             if (!shop.bannerDataUri || !shop.phone) {
-            throw new Error(`Banner or phone number for ${shop.name} is missing.`);
+              console.warn(`Skipping link generation for ${shop.name} due to missing banner or phone.`);
+              return { success: false, shopName: shop.name, error: `Banner or phone number for ${shop.name} is missing.` };
             }
             
             await addDoc(collection(db, 'sharedBanners'), {
@@ -200,11 +205,9 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
     );
     return results;
   } catch (error) {
-      // This will catch top-level errors, like the permission denied error during the delete query
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';
       console.error('Error in shareBannersByLink:', error);
-      // Re-throw the error to be caught by the calling function in the component
       throw new Error(errorMessage);
   }
 }
@@ -243,20 +246,26 @@ export async function cleanupExpiredBanners() {
   
   const q = query(collection(db, "sharedBanners"), where("createdAt", "<", twentyFourHoursAgo));
   
-  const querySnapshot = await getDocs(q);
-  
-  if (querySnapshot.empty) {
-    console.log("No expired banners to delete.");
-    return { success: true, deletedCount: 0 };
-  }
+  try {
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log("No expired banners to delete.");
+      return { success: true, deletedCount: 0 };
+    }
 
-  const batch = writeBatch(db);
-  querySnapshot.forEach(doc => {
-    batch.delete(doc.ref);
-  });
-  
-  await batch.commit();
-  
-  console.log(`Deleted ${querySnapshot.size} expired banners.`);
-  return { success: true, deletedCount: querySnapshot.size };
+    const batch = writeBatch(db);
+    querySnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    
+    console.log(`Deleted ${querySnapshot.size} expired banners.`);
+    return { success: true, deletedCount: querySnapshot.size };
+  } catch (error) {
+    console.error("Error cleaning up expired banners:", error);
+    // Rethrow or handle as needed
+    throw error;
+  }
 }

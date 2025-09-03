@@ -33,13 +33,11 @@ import {
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
 import { generateImageForShop } from '@/lib/image-generator';
-import { useRouter } from 'next/navigation';
 
 const db = getFirestore(app);
 
 export default function Home() {
   const { toast } = useToast();
-  const router = useRouter();
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -196,7 +194,6 @@ export default function Home() {
         const generatedBanners = await Promise.all(
             recipients.map(async shop => {
                 if (!shop.logo) {
-                // Silently skip shops without logos for now, or you can throw an error
                 console.warn(`Logo missing for shop ${shop.name}, skipping banner generation.`);
                 return null;
                 }
@@ -208,7 +205,6 @@ export default function Home() {
                 return { ...shop, bannerDataUri: generatedBannerUri };
             })
         );
-        // Filter out any nulls from shops that were skipped
         return generatedBanners.filter(Boolean) as (Shop & { bannerDataUri: string })[];
     } catch (error) {
         const errorMessage =
@@ -245,11 +241,6 @@ export default function Home() {
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
       if (!shopsWithBanners || shopsWithBanners.length === 0) {
-        setIsSending(false);
-        if (!shopsWithBanners) {
-            // Error already toasted in generate function
-            return;
-        }
         toast({
             title: 'No Banners Generated',
             description: 'Could not generate any banners. Check if shops have logos.',
@@ -264,17 +255,8 @@ export default function Home() {
         emailBody
       );
 
-      let successCount = 0;
-      let errorCount = 0;
-
-      results.forEach(result => {
-        if (result.success) {
-          successCount++;
-        } else {
-          errorCount++;
-          console.error(`Failed for ${result.shopName}: ${result.error}`);
-        }
-      });
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.length - successCount;
 
       toast({
         title: 'Sending Complete',
@@ -317,11 +299,9 @@ export default function Home() {
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
       if (!shopsWithBanners || shopsWithBanners.length === 0) {
-        setIsSending(false);
-        if (!shopsWithBanners) return;
          toast({
             title: 'No Banners Generated',
-            description: 'Could not generate banners for sharing.',
+            description: 'Could not generate banners for sharing. Check if shops have logos and phone numbers.',
             variant: 'destructive'
         });
         return;
@@ -335,7 +315,7 @@ export default function Home() {
         title: 'Link Generation Complete',
         description: `Created ${successCount} shareable links. ${
           errorCount > 0 ? `${errorCount} failed.` : ''
-        } You can now provide these links to your clients.`,
+        }`,
         variant: errorCount > 0 ? 'destructive' : 'default',
         duration: 9000
       });
@@ -373,11 +353,9 @@ export default function Home() {
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
        if (!shopsWithBanners || shopsWithBanners.length === 0) {
-        setIsSending(false);
-        if (!shopsWithBanners) return;
          toast({
             title: 'No Banners Generated',
-            description: 'Could not generate any banners for download.',
+            description: 'Could not generate any banners for download. Check if shops have logos.',
             variant: 'destructive'
         });
         return;
