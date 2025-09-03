@@ -53,9 +53,11 @@ async function sendEmail(
   return { success: true };
 }
 
-function generateEmailHTML(shopName: string, emailBody: string): string {
+function generateEmailHTML(shop: Shop, emailBody: string): string {
   const personalizedBody = emailBody
-    .replace(/{{shopName}}/g, shopName)
+    .replace(/{{shopName}}/g, shop.name)
+    .replace(/{{address}}/g, shop.address || '')
+    .replace(/{{phone}}/g, shop.phone || '')
     .replace(/\n/g, '<br>');
 
   return `
@@ -105,7 +107,6 @@ function generateEmailHTML(shopName: string, emailBody: string): string {
   `;
 }
 
-
 export async function generateAndSendBanners(
   shops: ShopWithBanner[],
   emailSubject: string,
@@ -118,7 +119,7 @@ export async function generateAndSendBanners(
           throw new Error(`Banner for ${shop.name} is missing.`);
         }
 
-        const emailHtml = generateEmailHTML(shop.name, emailBody);
+        const emailHtml = generateEmailHTML(shop, emailBody);
 
         const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
         const bannerBase64 = shop.bannerDataUri.split(',')[1];
@@ -127,11 +128,16 @@ export async function generateAndSendBanners(
           Filename: 'banner.png',
           Base64Content: bannerBase64,
         };
+        
+        const personalizedSubject = emailSubject
+            .replace(/{{shopName}}/g, shop.name)
+            .replace(/{{address}}/g, shop.address || '')
+            .replace(/{{phone}}/g, shop.phone || '');
 
         await sendEmail(
           shop.email,
           'banner@zedsu.com',
-          emailSubject.replace('{{shopName}}', shop.name),
+          personalizedSubject,
           emailHtml,
           [bannerAttachment]
         );
