@@ -118,7 +118,7 @@ export async function generateAndSendBanners(
 
         await sendEmail(
           shop.email,
-          'contact@bannerbee.app',
+          'banner@zedsu.com',
           'Your Personalized Banner is Here!',
           emailHtml
         );
