@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import {
   DndContext,
@@ -19,17 +19,55 @@ import {
 } from '@dnd-kit/sortable';
 import { generateAndSendBanners } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import useLocalStorage from '@/hooks/use-local-storage';
 import { Header } from '@/components/header';
 import { BannerEditor } from '@/components/banner-editor';
-import { generateRuleSet } from '@/lib/rules';
 
 import type { Shop, Group, BannerElement } from '@/lib/types';
+import {
+  collection,
+  onSnapshot,
+  getFirestore,
+  QuerySnapshot,
+  DocumentData,
+} from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 export default function Home() {
   const { toast } = useToast();
-  const [shops, setShops] = useLocalStorage<Shop[]>('bannerbee-shops', []);
-  const [groups, setGroups] = useLocalStorage<Group[]>('bannerbee-groups', []);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+
+  useEffect(() => {
+    const unsubShops = onSnapshot(
+      collection(db, 'shops'),
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        setShops(
+          snapshot.docs.map(
+            doc => ({ ...doc.data(), id: doc.id } as Shop)
+          )
+        );
+      }
+    );
+
+    const unsubGroups = onSnapshot(
+      collection(db, 'groups'),
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        setGroups(
+          snapshot.docs.map(
+            doc => ({ ...doc.data(), id: doc.id } as Group)
+          )
+        );
+      }
+    );
+
+    return () => {
+      unsubShops();
+      unsubGroups();
+    };
+  }, []);
+
   const [bannerImage, setBannerImage] = useState<string | null>(
     'https://picsum.photos/1200/630'
   );
@@ -95,7 +133,7 @@ export default function Home() {
     [elements, selectedElementId]
   );
 
-  function handleDragEnd(event: DragEndEvent) {
+  function handleLayerDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setElements(items => {
@@ -134,17 +172,16 @@ export default function Home() {
     }
 
     setIsSending(true);
-    const ruleSet = generateRuleSet(elements);
-    
+
     toast({
       title: 'Sending Banners...',
-      description: `Personalizing and sending to ${recipients.length} shops.`,
+      description: `Sending to ${recipients.length} shops.`,
     });
 
     const results = await generateAndSendBanners(
       recipients,
       bannerImage,
-      ruleSet
+      elements
     );
 
     let successCount = 0;
@@ -174,34 +211,26 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header
         shops={shops}
-        setShops={setShops}
         groups={groups}
-        setGroups={setGroups}
       />
       <main className="flex-1">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <BannerEditor
-            bannerImage={bannerImage}
-            handleBannerImageUpload={handleBannerImageUpload}
-            elements={elements}
-            selectedElement={selectedElement}
-            setSelectedElementId={setSelectedElementId}
-            updateElement={updateElement}
-            removeElement={removeElement}
-            addElement={addElement}
-            shops={shops}
-            groups={groups}
-            selectedGroups={selectedGroups}
-            setSelectedGroups={setSelectedGroups}
-            isSending={isSending}
-            handleSend={handleSend}
-            ruleSet={generateRuleSet(elements)}
-          />
-        </DndContext>
+        <BannerEditor
+          bannerImage={bannerImage}
+          handleBannerImageUpload={handleBannerImageUpload}
+          elements={elements}
+          selectedElement={selectedElement}
+          setSelectedElementId={setSelectedElementId}
+          updateElement={updateElement}
+          removeElement={removeElement}
+          addElement={addElement}
+          shops={shops}
+          groups={groups}
+          selectedGroups={selectedGroups}
+          setSelectedGroups={setSelectedGroups}
+          isSending={isSending}
+          handleSend={handleSend}
+          handleLayerDragEnd={handleLayerDragEnd}
+        />
       </main>
     </div>
   );

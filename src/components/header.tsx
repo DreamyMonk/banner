@@ -26,12 +26,10 @@ const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 interface HeaderProps {
   shops: Shop[];
-  setShops: Dispatch<SetStateAction<Shop[]>>;
   groups: Group[];
-  setGroups: Dispatch<SetStateAction<Group[]>>;
 }
 
-export function Header({ shops, setShops, groups, setGroups }: HeaderProps) {
+export function Header({ shops, groups }: HeaderProps) {
   return (
     <header className="flex items-center justify-between p-4 border-b bg-card">
       <div className="flex items-center gap-2">
@@ -40,9 +38,7 @@ export function Header({ shops, setShops, groups, setGroups }: HeaderProps) {
       </div>
       <ShopManager
         shops={shops}
-        setShops={setShops}
         groups={groups}
-        setGroups={setGroups}
       />
     </header>
   );

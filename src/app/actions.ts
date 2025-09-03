@@ -1,27 +1,65 @@
 'use server';
 
-import { personalizeBanner } from '@/ai/flows/personalize-banner-with-shop-data';
-import type { PersonalizeBannerInput } from '@/ai/flows/personalize-banner-with-shop-data';
-import type { Shop } from '@/lib/types';
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import type { BannerElement, Shop } from '@/lib/types';
 
-// This is a placeholder for a real email sending function
+const db = getFirestore(app);
+
+// This function adds an email document to the 'mail' collection
+// which is then picked up by the 'Trigger Email' Firebase Extension to send the email.
 async function sendEmail(
   to: string,
   from: string,
   subject: string,
-  bannerDataUri: string
+  html: string
 ) {
-  console.log(`Simulating email send to: ${to}`);
-  // In a real app, you would use a service like Resend, SendGrid, etc.
-  // For example: await resend.emails.send({ from, to, subject, html: `<img src="${bannerDataUri}" />` });
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  console.log(`Adding email to Firestore queue for: ${to}`);
+  await addDoc(collection(db, 'mail'), {
+    to: [to],
+    from: from,
+    message: {
+      subject: subject,
+      html: html,
+    },
+  });
   return { success: true };
 }
+
+function generateHTML(shop: Shop, bannerImage: string, elements: BannerElement[]): string {
+    const elementHTML = elements.map(element => {
+      const style: React.CSSProperties = {
+          position: 'absolute',
+          left: `${element.x}%`,
+          top: `${element.y}%`,
+          transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
+          opacity: element.opacity / 100,
+          aspectRatio: element.type === 'logo' ? '1 / 1' : undefined,
+      };
+
+      if (element.type === 'logo') {
+        return `<div style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;width:${element.scale}%;"><img src="${shop.logo}" alt="Shop Logo" style="width:100%;height:auto;object-fit:contain;" /></div>`
+      }
+
+      if (element.type === 'text') {
+        return `<span style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;color:${element.color};font-weight:${element.fontWeight};font-size:clamp(8px, 4vw, 120px);font-family:Belleza, sans-serif;white-space:nowrap;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">${element.text?.replace('{{shopName}}', shop.name)}</span>`
+      }
+      return '';
+    }).join('');
+
+    return `
+      <div style="position: relative; width: 1200px; height: 630px; overflow: hidden;">
+        <img src="${bannerImage}" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;" />
+        ${elementHTML}
+      </div>
+    `;
+}
+
 
 export async function generateAndSendBanners(
   shops: Shop[],
   bannerDataUri: string,
-  ruleSet: string
+  elements: BannerElement[]
 ) {
   const results = await Promise.all(
     shops.map(async shop => {
@@ -33,20 +71,13 @@ export async function generateAndSendBanners(
           throw new Error(`Logo for ${shop.name} is missing.`);
         }
 
-        const input: PersonalizeBannerInput = {
-          bannerDataUri,
-          logoDataUri: shop.logo,
-          shopName: shop.name,
-          ruleSet,
-        };
-
-        const result = await personalizeBanner(input);
+        const emailHtml = generateHTML(shop, bannerDataUri, elements);
 
         await sendEmail(
           shop.email,
           'contact@bannerbee.app',
           'Your Personalized Banner is Here!',
-          result.personalizedBannerDataUri
+          emailHtml
         );
 
         return { success: true, shopName: shop.name };
@@ -59,4 +90,35 @@ export async function generateAndSendBanners(
   );
 
   return results;
+}
+
+export async function addShop(shop: Omit<Shop, 'id'>) {
+    await addDoc(collection(db, 'shops'), shop);
+}
+
+export async function updateShop(shop: Shop) {
+    const { doc, updateDoc, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore(app);
+    await updateDoc(doc(db, 'shops', shop.id), {
+        name: shop.name,
+        email: shop.email,
+        logo: shop.logo,
+        groups: shop.groups,
+    });
+}
+
+export async function deleteShop(shopId: string) {
+    const { doc, deleteDoc, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore(app);
+    await deleteDoc(doc(db, 'shops', shopId));
+}
+
+export async function addGroup(groupName: string) {
+    await addDoc(collection(db, 'groups'), { name: groupName });
+}
+
+export async function deleteGroup(groupId: string) {
+    const { doc, deleteDoc, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore(app);
+    await deleteDoc(doc(db, 'groups', groupId));
 }

@@ -1,38 +1,62 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
 import type { BannerElement } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { GripVertical, Trash2, Image, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 interface LayersPanelProps {
   elements: BannerElement[];
   selectedElementId: string | null;
   setSelectedElementId: (id: string | null) => void;
   removeElement: (id: string) => void;
+  onDragEnd: (event: DragEndEvent) => void;
 }
 
-export function LayersPanel({ elements, selectedElementId, setSelectedElementId, removeElement }: LayersPanelProps) {
+export function LayersPanel({ elements, selectedElementId, setSelectedElementId, removeElement, onDragEnd }: LayersPanelProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
   return (
     <div>
         <h3 className="text-lg font-headline mb-2">Layers</h3>
         <div className="space-y-2 p-2 border rounded-md min-h-[6rem]">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onDragEnd}
+          >
             <SortableContext items={elements} strategy={verticalListSortingStrategy}>
-            {elements.map(element => (
-                <SortableItem 
-                    key={element.id} 
-                    id={element.id}
-                    element={element}
-                    isSelected={selectedElementId === element.id}
-                    onSelect={() => setSelectedElementId(element.id)}
-                    onRemove={() => removeElement(element.id)}
-                />
-            ))}
+              {elements.map(element => (
+                  <SortableItem 
+                      key={element.id} 
+                      id={element.id}
+                      element={element}
+                      isSelected={selectedElementId === element.id}
+                      onSelect={() => setSelectedElementId(element.id)}
+                      onRemove={() => removeElement(element.id)}
+                  />
+              ))}
             </SortableContext>
-            {elements.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center pt-4">No elements added yet.</p>
-            )}
+          </DndContext>
+          {elements.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center pt-4">No elements added yet.</p>
+          )}
         </div>
     </div>
   );
@@ -77,4 +101,3 @@ function SortableItem({ element, isSelected, onSelect, onRemove }: { id: string,
       </div>
     );
   }
-  

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Dispatch, SetStateAction, ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -42,22 +42,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, Plus, Trash2, Edit, X, Tag, Image as ImageIcon } from 'lucide-react';
+import { Users, Plus, Trash2, Edit, X } from 'lucide-react';
 import type { Shop, Group } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { addShop, updateShop, deleteShop, addGroup, deleteGroup } from '@/app/actions';
 
 interface ShopManagerProps {
   shops: Shop[];
-  setShops: Dispatch<SetStateAction<Shop[]>>;
   groups: Group[];
-  setGroups: Dispatch<SetStateAction<Group[]>>;
 }
 
-export function ShopManager({ shops, setShops, groups, setGroups }: ShopManagerProps) {
+export function ShopManager({ shops, groups }: ShopManagerProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState<Shop | null>(null);
-  const [newShop, setNewShop] = useState({ name: '', email: '', logo: '', groups: [] as string[] });
+  const [newShop, setNewShop] = useState<Omit<Shop, 'id'>>({ name: '', email: '', logo: '', groups: [] as string[] });
   const [newGroup, setNewGroup] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -74,20 +73,25 @@ export function ShopManager({ shops, setShops, groups, setGroups }: ShopManagerP
     }
   };
 
-  const handleSaveShop = () => {
+  const handleSaveShop = async () => {
     if (!newShop.name || !newShop.email || !newShop.logo) {
       toast({ title: 'Missing Information', description: 'Please fill out all fields.', variant: 'destructive' });
       return;
     }
 
-    if (isEditing) {
-      setShops(shops.map(shop => (shop.id === isEditing.id ? { ...isEditing, ...newShop } : shop)));
-      toast({ title: 'Shop Updated', description: `Updated details for ${newShop.name}.` });
-    } else {
-      setShops([...shops, { id: crypto.randomUUID(), ...newShop }]);
-      toast({ title: 'Shop Added', description: `${newShop.name} has been added.` });
+    try {
+      if (isEditing) {
+        await updateShop({ ...isEditing, ...newShop });
+        toast({ title: 'Shop Updated', description: `Updated details for ${newShop.name}.` });
+      } else {
+        await addShop(newShop);
+        toast({ title: 'Shop Added', description: `${newShop.name} has been added.` });
+      }
+      resetForm();
+    } catch (error) {
+      console.error("Failed to save shop:", error);
+      toast({ title: 'Error', description: 'Could not save shop.', variant: 'destructive' });
     }
-    resetForm();
   };
 
   const handleEdit = (shop: Shop) => {
@@ -96,9 +100,14 @@ export function ShopManager({ shops, setShops, groups, setGroups }: ShopManagerP
     setLogoPreview(shop.logo);
   };
   
-  const handleDelete = (shopId: string) => {
-    setShops(shops.filter(shop => shop.id !== shopId));
-    toast({ title: 'Shop Removed', description: 'The shop has been removed.' });
+  const handleDelete = async (shopId: string) => {
+    try {
+      await deleteShop(shopId);
+      toast({ title: 'Shop Removed', description: 'The shop has been removed.' });
+    } catch (error) {
+      console.error("Failed to delete shop:", error);
+      toast({ title: 'Error', description: 'Could not delete shop.', variant: 'destructive' });
+    }
   };
   
   const resetForm = () => {
@@ -107,17 +116,26 @@ export function ShopManager({ shops, setShops, groups, setGroups }: ShopManagerP
     setLogoPreview(null);
   };
 
-  const handleAddGroup = () => {
+  const handleAddGroup = async () => {
     if (newGroup && !groups.find(g => g.name === newGroup)) {
-      setGroups([...groups, { id: crypto.randomUUID(), name: newGroup }]);
-      setNewGroup('');
+      try {
+        await addGroup(newGroup);
+        setNewGroup('');
+      } catch (error) {
+        console.error("Failed to add group:", error);
+        toast({ title: 'Error', description: 'Could not add group.', variant: 'destructive' });
+      }
     }
   };
   
-  const handleDeleteGroup = (groupId: string) => {
-    setGroups(groups.filter(g => g.id !== groupId));
-    // Also remove this group from any shops that have it
-    setShops(shops.map(shop => ({ ...shop, groups: shop.groups.filter(g => g !== groupId) })));
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      await deleteGroup(groupId);
+      // Firestore listeners will handle updating the UI
+    } catch (error) {
+        console.error("Failed to delete group:", error);
+        toast({ title: 'Error', description: 'Could not delete group.', variant: 'destructive' });
+    }
   };
 
   return (
