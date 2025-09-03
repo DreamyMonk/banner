@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { generateAndSendBanners, shareBannersByLink } from './actions';
+import { sendBannersByEmail, shareBannersByLink } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { BannerEditor } from '@/components/banner-editor';
@@ -216,7 +216,7 @@ export default function Home() {
         return;
       }
 
-      const results = await generateAndSendBanners(
+      const results = await sendBannersByEmail(
         shopsWithBanners,
         emailSubject,
         emailBody

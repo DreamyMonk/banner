@@ -15,7 +15,6 @@ import {
   where,
   getDocs,
   writeBatch,
-  limit,
 } from 'firebase/firestore';
 
 const db = getFirestore(app);
@@ -37,14 +36,14 @@ async function sendEmail(
   html: string,
   attachments?: Attachment[]
 ) {
-  if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
-    throw new Error('Mailjet API keys are not configured.');
-  }
-  
-  const mailjet = new Mailjet({
-    apiKey: process.env.MAILJET_API_KEY,
-    apiSecret: process.env.MAILJET_SECRET_KEY,
-  });
+    if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
+        throw new Error('Mailjet API keys are not configured in environment variables.');
+    }
+    
+    const mailjet = new Mailjet({
+        apiKey: process.env.MAILJET_API_KEY,
+        apiSecret: process.env.MAILJET_SECRET_KEY,
+    });
 
   console.log(`Sending email via Mailjet to: ${to}`);
   const requestData = {
@@ -130,7 +129,7 @@ function generateEmailHTML(
   `;
 }
 
-export async function generateAndSendBanners(
+export async function sendBannersByEmail(
   shops: ShopWithBanner[],
   emailSubject: string,
   emailBody: string
