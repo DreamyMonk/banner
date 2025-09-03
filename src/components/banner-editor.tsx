@@ -357,7 +357,7 @@ export function BannerEditor({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6">
       <div
-        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg relative min-h-[60vh]"
+        className="lg:col-span-2 flex flex-col items-center bg-muted/50 rounded-lg relative min-h-[60vh]"
       >
         <div className="w-full flex-1 flex items-center justify-center p-4 overflow-hidden" ref={editorWrapperRef}>
             <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
