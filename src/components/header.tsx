@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
+import { Users, LogOut } from 'lucide-react';
+import { logout } from '@/app/login/actions';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -37,6 +38,11 @@ export function Header() {
             <Users className="mr-2" /> Manage Shops
           </Link>
         </Button>
+        <form action={logout}>
+            <Button variant="outline" type="submit">
+                <LogOut className="mr-2" /> Log out
+            </Button>
+        </form>
       </div>
     </header>
   );

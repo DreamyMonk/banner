@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSession } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
   const isApiCron = request.nextUrl.pathname.startsWith('/api/cron');
@@ -10,8 +11,19 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next();
   }
+  
+  const publicPaths = ['/login', '/download'];
+  
+  if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
 
-  // Login is removed, allow all other requests.
+  const session = await getSession();
+
+  if (!session?.loggedIn) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   return NextResponse.next();
 }
 
