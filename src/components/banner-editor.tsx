@@ -85,7 +85,6 @@ const DraggableElement = ({
       {...listeners}
       {...attributes}
       className="absolute p-2"
-      onClick={(e) => { e.stopPropagation(); onSelect(element.id); }}
       onMouseDown={(e) => { e.stopPropagation(); onSelect(element.id); }}
     >
       {element.type === 'logo' && (
@@ -155,17 +154,23 @@ export function BannerEditor({
 }: BannerEditorProps) {
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const [interaction, setInteraction] = useState<{
+  const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
     elementId: string | null;
     startX: number;
     startY: number;
+    elementNode: HTMLElement | null;
     startRotation: number;
     startScale: number;
-  }>({ type: null, elementId: null, startX: 0, startY: 0, startRotation: 0, startScale: 0 });
+    centerX: number;
+    centerY: number;
+  }>({ type: null, elementId: null, startX: 0, startY: 0, elementNode: null, startRotation: 0, startScale: 0, centerX: 0, centerY: 0 });
 
 
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
+    // Prevent this from firing if we were resizing/rotating
+    if (interactionRef.current.type) return;
+
     const element = elements.find(el => el.id === active.id);
     if (!element || !containerRef.current) return;
     
@@ -189,60 +194,57 @@ export function BannerEditor({
     if (!containerRef.current) return;
 
     const element = elements.find(el => el.id === elementId);
-    if (!element) return;
-    
-    setInteraction({ 
-      type, 
-      elementId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startRotation: element.rotation,
-      startScale: element.scale,
-    });
-  };
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!interaction.type || !interaction.elementId || !containerRef.current) return;
-    
-    const element = elements.find(el => el.id === interaction.elementId);
-    if (!element) return;
-
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const elementNode = containerRef.current.querySelector(`[data-kit-node="draggable"][id="${element.id}"]`) as HTMLElement;
-    if (!elementNode) return;
+    const elementNode = e.currentTarget.closest('.absolute') as HTMLElement;
+    if (!element || !elementNode) return;
     
     const elemRect = elementNode.getBoundingClientRect();
     const centerX = elemRect.left + elemRect.width / 2;
     const centerY = elemRect.top + elemRect.height / 2;
 
+    interactionRef.current = { 
+      type, 
+      elementId,
+      startX: e.clientX,
+      startY: e.clientY,
+      elementNode,
+      startRotation: element.rotation,
+      startScale: element.scale,
+      centerX,
+      centerY,
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const interaction = interactionRef.current;
+    if (!interaction.type || !interaction.elementId || !containerRef.current) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+
     if (interaction.type === 'rotate') {
-        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-        updateElement(element.id, { rotation: Math.round(angle + 90) });
+        const angle = Math.atan2(e.clientY - interaction.centerY, e.clientX - interaction.centerX) * (180 / Math.PI);
+        updateElement(interaction.elementId, { rotation: Math.round(angle + 90) });
     }
 
     if (interaction.type === 'resize') {
         const dx = e.clientX - interaction.startX;
-        // Simple scaling based on horizontal mouse movement.
-        // This is a more stable approach than distance calculation.
-        const newScale = interaction.startScale + (dx / containerRect.width) * 100;
-        updateElement(element.id, { scale: Math.max(5, Math.min(200, newScale)) });
+        const dy = e.clientY - interaction.startY;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        const direction = (e.clientX > interaction.startX) ? 1 : -1;
+
+        const newScale = interaction.startScale + (distance / containerRef.current.getBoundingClientRect().width) * 100 * direction;
+        updateElement(interaction.elementId, { scale: Math.max(5, Math.min(200, newScale)) });
     }
-  }, [interaction, elements, updateElement]);
+  }, [updateElement]);
 
   const handleMouseUp = useCallback(() => {
-    setInteraction({ type: null, elementId: null, startX: 0, startY: 0, startRotation: 0, startScale: 0 });
-  }, []);
-
-  useEffect(() => {
-    if (interaction.type) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [interaction.type, handleMouseMove, handleMouseUp]);
+    interactionRef.current = { type: null, elementId: null, startX: 0, startY: 0, elementNode: null, startRotation: 0, startScale: 0, centerX: 0, centerY: 0 };
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove]);
 
 
   const sensors = useSensor(PointerSensor);
