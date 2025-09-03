@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { generateAndSendBanners } from './actions';
+import { generateAndSendBanners, shareBannersByLink } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { BannerEditor } from '@/components/banner-editor';
@@ -33,11 +33,13 @@ import {
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
 import { generateImageForShop } from '@/lib/image-generator';
+import { useRouter } from 'next/navigation';
 
 const db = getFirestore(app);
 
 export default function Home() {
   const { toast } = useToast();
+  const router = useRouter();
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
@@ -252,6 +254,55 @@ export default function Home() {
       setIsSending(false);
     }
   };
+  
+  const handleShare = async () => {
+    const recipients = getRecipients();
+    if (recipients.length === 0) {
+      toast({
+        title: 'No Recipients',
+        description: 'Please select recipients to share with.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSending(true);
+    toast({
+      title: 'Generating & Sharing Links...',
+      description: `Processing ${recipients.length} shops.`,
+    });
+
+    try {
+      const shopsWithBanners = await generateBannersForRecipients(recipients);
+      if (!shopsWithBanners) {
+        setIsSending(false);
+        return;
+      }
+
+      const results = await shareBannersByLink(shopsWithBanners);
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.length - successCount;
+
+      toast({
+        title: 'Sharing Complete',
+        description: `Shared ${successCount} links successfully. ${
+          errorCount > 0 ? `${errorCount} failed.` : ''
+        }`,
+        variant: errorCount > 0 ? 'destructive' : 'default',
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({
+        title: 'Sharing Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      console.error('Error sharing links:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const handleDownload = async () => {
     const recipients = getRecipients();
@@ -332,6 +383,7 @@ export default function Home() {
             isSending={isSending}
             handleSend={handleSend}
             handleDownload={handleDownload}
+            handleShare={handleShare}
             handleLayerDragEnd={handleLayerDragEnd}
             emailSubject={emailSubject}
             setEmailSubject={setEmailSubject}

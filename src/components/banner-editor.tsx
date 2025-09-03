@@ -25,6 +25,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize,
+  Share2,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
@@ -65,6 +66,7 @@ interface BannerEditorProps {
   isSending: boolean;
   handleSend: () => void;
   handleDownload: () => void;
+  handleShare: () => void;
   handleLayerDragEnd: (event: DragEndEvent) => void;
   emailSubject: string;
   setEmailSubject: Dispatch<SetStateAction<string>>;
@@ -111,7 +113,7 @@ const DraggableElement = ({
     color: element.color,
     fontSize: `${fontSize}px`,
     fontWeight: element.fontWeight,
-    fontFamily: element.fontFamily,
+    fontFamily: `'${element.fontFamily}', sans-serif`,
     letterSpacing: `${element.letterSpacing || 0}px`,
   };
 
@@ -185,6 +187,7 @@ export function BannerEditor({
   isSending,
   handleSend,
   handleDownload,
+  handleShare,
   handleLayerDragEnd,
   emailSubject,
   setEmailSubject,
@@ -220,7 +223,7 @@ export function BannerEditor({
       );
       setZoom(Math.max(0.1, newZoom));
     }
-  }, [bannerDimensions]);
+  }, [bannerDimensions, bannerImage]);
 
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
@@ -343,7 +346,7 @@ export function BannerEditor({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
       <div
-        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative"
+        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
         ref={editorWrapperRef}
       >
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
@@ -523,8 +526,8 @@ export function BannerEditor({
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Button
+              <div className="grid grid-cols-1 gap-2 mt-4">
+                 <Button
                   size="lg"
                   onClick={handleSend}
                   disabled={isSending}
@@ -536,7 +539,24 @@ export function BannerEditor({
                     </>
                   ) : (
                     <>
-                      <Send className="mr-2" /> Send Emails
+                      <Send className="mr-2" /> Send as Email Attachment
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="mr-2" /> Send Download Link
                     </>
                   )}
                 </Button>
@@ -553,7 +573,7 @@ export function BannerEditor({
                     </>
                   ) : (
                     <>
-                      <Download className="mr-2" /> Download All
+                      <Download className="mr-2" /> Download All as ZIP
                     </>
                   )}
                 </Button>

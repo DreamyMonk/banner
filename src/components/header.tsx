@@ -2,7 +2,10 @@
 
 import { ShopManager } from './shop-manager';
 import type { Shop, Group } from '@/lib/types';
-import type { Dispatch, SetStateAction } from 'react';
+import { Button } from './ui/button';
+import { logout } from '@/app/login/actions';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -30,16 +33,29 @@ interface HeaderProps {
 }
 
 export function Header({ shops, groups }: HeaderProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+    router.refresh();
+  };
+
   return (
     <header className="flex items-center justify-between p-4 border-b bg-card">
       <div className="flex items-center gap-2">
         <BeeIcon className="w-8 h-8 text-primary" />
         <h1 className="text-2xl font-headline text-foreground">BannerBee</h1>
       </div>
-      <ShopManager
-        shops={shops}
-        groups={groups}
-      />
+      <div className='flex items-center gap-4'>
+        <ShopManager
+          shops={shops}
+          groups={groups}
+        />
+        <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Log out">
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
     </header>
   );
 }
