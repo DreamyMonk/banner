@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { sign } from '@/lib/auth';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password'; // Use environment variable
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'password'; // Use environment variable
 
 export async function login(password: string) {
   if (password === ADMIN_PASSWORD) {
