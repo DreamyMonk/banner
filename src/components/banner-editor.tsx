@@ -72,6 +72,7 @@ const DraggableElement = ({
   isSelected,
   onSelect,
   onStartInteraction,
+  containerWidth
 }: {
   element: BannerElement;
   isSelected: boolean;
@@ -81,6 +82,7 @@ const DraggableElement = ({
     type: 'rotate' | 'resize',
     id: string
   ) => void;
+  containerWidth: number;
 }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: element.id,
@@ -96,6 +98,14 @@ const DraggableElement = ({
     border: isSelected ? '2px dashed hsl(var(--primary))' : 'none',
     boxSizing: 'border-box' as const,
     cursor: 'move',
+  };
+  
+  const textStyle = {
+    color: element.color,
+    fontSize: `${(element.scale / 100) * 4 * (containerWidth / 100) + 8}px`,
+    fontWeight: element.fontWeight,
+    fontFamily: element.fontFamily,
+    letterSpacing: `${element.letterSpacing || 0}px`,
   };
 
   return (
@@ -124,13 +134,7 @@ const DraggableElement = ({
       {element.type === 'text' && (
         <span
           className="whitespace-nowrap pointer-events-none text-base md:text-lg"
-          style={{
-            color: element.color,
-            fontSize: `calc(${element.scale} / 100 * 4vw + 8px)`,
-            fontWeight: element.fontWeight,
-            fontFamily: element.fontFamily,
-            letterSpacing: `${element.letterSpacing || 0}px`,
-          }}
+          style={textStyle}
         >
           {element.text}
         </span>
@@ -181,6 +185,7 @@ export function BannerEditor({
   setEmailBody,
 }: BannerEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
     elementId: string | null;
@@ -202,6 +207,22 @@ export function BannerEditor({
     centerX: 0,
     centerY: 0,
   });
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(entries => {
+        if (entries[0]) {
+            setContainerWidth(entries[0].contentRect.width);
+        }
+    });
+
+    if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+        resizeObserver.disconnect();
+    };
+  }, []);
 
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
     // Prevent this from firing if we were resizing/rotating
@@ -350,6 +371,7 @@ export function BannerEditor({
                 onSelect={setSelectedElementId}
                 onStartInteraction={handleInteractionStart}
                 isSelected={selectedElement?.id === element.id}
+                containerWidth={containerWidth}
               />
             ))}
           </div>
