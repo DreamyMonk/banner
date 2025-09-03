@@ -50,6 +50,7 @@ import { Badge } from '@/components/ui/badge';
 
 interface BannerEditorProps {
   bannerImage: string | null;
+  imageDimensions: { width: number; height: number } | null;
   handleBannerImageUpload: (e: ChangeEvent<HTMLInputElement>) => void;
   elements: BannerElement[];
   selectedElement: BannerElement | undefined;
@@ -169,8 +170,9 @@ const DraggableElement = ({
 
 const emailPlaceholders = ['{{shopName}}', '{{address}}', '{{phone}}', '{{email}}'];
 
-export function BannerEditor({
+export default function BannerEditor({
   bannerImage,
+  imageDimensions,
   handleBannerImageUpload,
   elements,
   selectedElement,
@@ -194,24 +196,10 @@ export function BannerEditor({
 }: BannerEditorProps) {
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [bannerDimensions, setBannerDimensions] = useState({
-    width: 1200,
-    height: 630,
-  });
+  
+  const bannerDimensions = imageDimensions || { width: 1200, height: 630 };
+  
   const [zoom, setZoom] = useState(1);
-
-  useEffect(() => {
-    if (bannerImage) {
-      const img = document.createElement('img');
-      img.src = bannerImage;
-      img.onload = () => {
-        setBannerDimensions({ width: img.width, height: img.height });
-      };
-    } else {
-      // Reset to default if no image
-      setBannerDimensions({ width: 1200, height: 630 });
-    }
-  }, [bannerImage]);
 
   const fitCanvasToView = useCallback(() => {
     if (editorWrapperRef.current && containerRef.current) {
@@ -355,81 +343,78 @@ export function BannerEditor({
   const sensors = useSensor(PointerSensor);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
       <div
-        className="lg:col-span-2 flex flex-col items-center bg-muted/50 rounded-lg relative min-h-[60vh]"
+        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
+        ref={editorWrapperRef}
       >
-        <div className="w-full flex-1 flex items-center justify-center p-4 overflow-hidden" ref={editorWrapperRef}>
-            <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
-            <div
-                id="banner-container"
-                ref={containerRef}
-                className="relative overflow-hidden shadow-lg bg-card rounded-lg flex-shrink-0"
-                style={{
-                width: bannerDimensions.width,
-                height: bannerDimensions.height,
-                transform: `scale(${zoom})`,
-                transformOrigin: 'center center',
-                }}
-                onClick={() => setSelectedElementId(null)}
-            >
-                {bannerImage ? (
-                <Image
-                    src={bannerImage}
-                    alt="Banner background"
-                    fill
-                    className="object-cover"
-                    data-ai-hint="social media banner"
-                    unoptimized
-                />
-                ) : (
-                <div className="flex items-center justify-center h-full bg-muted">
-                    <div className="text-center text-muted-foreground p-4">
-                    <ImagePlus className="mx-auto h-12 w-12" />
-                    <p className="mt-2 text-sm md:text-base">
-                        Upload a banner to get started
-                    </p>
-                    </div>
+        <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
+          <div
+            id="banner-container"
+            ref={containerRef}
+            className="relative overflow-hidden shadow-lg bg-card rounded-lg flex-shrink-0"
+            style={{
+              width: bannerDimensions.width,
+              height: bannerDimensions.height,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'center center',
+            }}
+            onClick={() => setSelectedElementId(null)}
+          >
+            {bannerImage ? (
+              <Image
+                src={bannerImage}
+                alt="Banner background"
+                fill
+                className="object-cover"
+                data-ai-hint="social media banner"
+                unoptimized
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-muted">
+                <div className="text-center text-muted-foreground p-4">
+                  <ImagePlus className="mx-auto h-12 w-12" />
+                  <p className="mt-2 text-sm md-text-base">
+                    Upload a banner to get started
+                  </p>
                 </div>
-                )}
+              </div>
+            )}
 
-                {elements.map(element => (
-                <DraggableElement
-                    key={element.id}
-                    element={element}
-                    onSelect={setSelectedElementId}
-                    onStartInteraction={handleInteractionStart}
-                    isSelected={selectedElement?.id === element.id}
-                    bannerDimensions={bannerDimensions}
-                />
-                ))}
-            </div>
-            </DndContext>
-        </div>
-        <div className="flex items-center justify-center w-full p-2 border-t bg-background rounded-b-lg">
-            <div className="flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
-            >
-                <ZoomOut />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={fitCanvasToView}>
-                <Maximize />
-            </Button>
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setZoom(z => Math.min(3, z + 0.1))}
-            >
-                <ZoomIn />
-            </Button>
-            </div>
+            {elements.map(element => (
+              <DraggableElement
+                key={element.id}
+                element={element}
+                onSelect={setSelectedElementId}
+                onStartInteraction={handleInteractionStart}
+                isSelected={selectedElement?.id === element.id}
+                bannerDimensions={bannerDimensions}
+              />
+            ))}
+          </div>
+        </DndContext>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
+          >
+            <ZoomOut />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={fitCanvasToView}>
+            <Maximize />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+          >
+            <ZoomIn />
+          </Button>
         </div>
       </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg flex flex-col overflow-hidden">
         <Tabs defaultValue="setup" className="flex flex-col h-full">
           <CardHeader>
             <CardTitle>Editor</CardTitle>
@@ -444,8 +429,12 @@ export function BannerEditor({
               </TabsTrigger>
             </TabsList>
           </CardHeader>
-          <TabsContent value="setup">
-            <div className="px-6 pb-6 space-y-6">
+          
+          <TabsContent
+            value="setup"
+            className="flex-1 min-h-0 overflow-y-auto"
+          >
+            <div className="space-y-6 px-6 pb-6">
               <div>
                 <h3 className="text-lg font-headline mb-2">Banner</h3>
                 <Input
@@ -485,108 +474,112 @@ export function BannerEditor({
               )}
             </div>
           </TabsContent>
-          <TabsContent value="send">
-            <div className="px-6 pb-6 space-y-6">
+          
+          <TabsContent
+            value="send"
+            className="flex-1 min-h-0 overflow-y-auto"
+          >
+              <div className="space-y-6 px-6 pb-6">
               <div>
-                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
                   <Users />
                   Recipients
-                </h3>
-                <RecipientsPanel
+                  </h3>
+                  <RecipientsPanel
                   groups={groups}
                   shops={shops}
                   selectedGroups={selectedGroups}
                   setSelectedGroups={setSelectedGroups}
-                />
+                  />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
                   <FileSignature />
                   Email Subject
-                </h3>
-                <Input
+                  </h3>
+                  <Input
                   placeholder="Enter your email subject..."
                   value={emailSubject}
                   onChange={e => setEmailSubject(e.target.value)}
-                />
+                  />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
                   <Mail />
                   Email Body
-                </h3>
-                <Textarea
+                  </h3>
+                  <Textarea
                   placeholder="Enter your email content here..."
                   className="min-h-[120px]"
                   value={emailBody}
                   onChange={e => setEmailBody(e.target.value)}
-                />
+                  />
               </div>
               <div>
-                <div className="flex flex-wrap gap-1 pt-1">
+                  <div className="flex flex-wrap gap-1 pt-1">
                   <span className="text-xs text-muted-foreground mr-1">
-                    Available placeholders:
+                      Available placeholders:
                   </span>
                   {emailPlaceholders.map(p => (
-                    <Badge variant="secondary" key={p} className="cursor-default">
+                      <Badge variant="secondary" key={p} className="cursor-default">
                       {p}
-                    </Badge>
+                      </Badge>
                   ))}
-                </div>
+                  </div>
               </div>
               <div className="grid grid-cols-1 gap-2 mt-4">
-                <Button
+                  <Button
                   size="lg"
                   onClick={handleSend}
                   disabled={isSending}
                   className="w-full"
-                >
+                  >
                   {isSending ? (
-                    <>
+                      <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-                    </>
+                      </>
                   ) : (
-                    <>
+                      <>
                       <Send className="mr-2" /> Send as Email Attachment
-                    </>
+                      </>
                   )}
-                </Button>
-                <Button
+                  </Button>
+                  <Button
                   size="lg"
                   variant="outline"
                   onClick={handleShare}
                   disabled={isSending}
                   className="w-full"
-                >
+                  >
                   {isSending ? (
-                    <>
+                      <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
-                    </>
+                      </>
                   ) : (
-                    <>
+                      <>
                       <Share2 className="mr-2" /> Push to Download
-                    </>
+                      </>
                   )}
-                </Button>
-                <Button
+                  </Button>
+                  <Button
                   size="lg"
                   variant="outline"
                   onClick={handleDownload}
                   disabled={isSending}
                   className="w-full"
-                >
+                  >
                   {isSending ? (
-                    <>
+                      <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
-                    </>
+                      </>
                   ) : (
-                    <>
+                      <>
                       <Download className="mr-2" /> Download All as ZIP
-                    </>
+                      </>
                   )}
-                </Button>
+                  </Button>
               </div>
-            </div>
+              </div>
           </TabsContent>
         </Tabs>
       </Card>

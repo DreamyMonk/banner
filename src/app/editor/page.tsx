@@ -20,7 +20,7 @@ import {
 import { sendBannersByEmail, shareBannersByLink, deleteSharedBanners } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
-import { BannerEditor } from '@/components/banner-editor';
+import BannerEditor from '@/components/banner-editor';
 import JSZip from 'jszip';
 import type { Shop, Group, BannerElement } from '@/lib/types';
 import {
@@ -101,6 +101,11 @@ export default function EditorPage() {
   const [bannerImage, setBannerImage] = useState<string | null>(
     'https://picsum.photos/1200/630'
   );
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
   const [elements, setElements] = useState<BannerElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(
     null
@@ -114,6 +119,22 @@ export default function EditorPage() {
     'Hi {{shopName}},\n\nHere is your personalized banner, attached.'
   );
 
+  useEffect(() => {
+    if (bannerImage) {
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        console.error("Failed to load image to calculate dimensions.");
+        setImageDimensions(null);
+      };
+      img.src = bannerImage;
+    } else {
+      setImageDimensions(null);
+    }
+  }, [bannerImage]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -124,7 +145,7 @@ export default function EditorPage() {
   const handleBannerImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setBannerFileName(file.name.replace(/\.[^/.]+$/, '')); // Store filename without extension
+      setBannerFileName(file.name.replace(/\.[^/.]+$/, ''));
       const reader = new FileReader();
       reader.onloadend = () => {
         setBannerImage(reader.result as string);
@@ -189,7 +210,7 @@ export default function EditorPage() {
       type,
       x: 50,
       y: 50,
-      scale: 15, // Default scale in % of banner width
+      scale: 15,
       rotation: 0,
       opacity: 100,
       ...(type === 'text' && {
@@ -309,7 +330,7 @@ export default function EditorPage() {
             description: 'Could not generate any banners. Check if shops have logos.',
             variant: 'destructive'
         });
-        setIsSending(false); // Add this
+        setIsSending(false);
         return;
       }
 
@@ -368,7 +389,7 @@ export default function EditorPage() {
             description: 'Could not generate banners for sharing. Check if shops have logos and phone numbers.',
             variant: 'destructive'
         });
-        setIsSending(false); // Add this
+        setIsSending(false);
         return;
       }
 
@@ -423,7 +444,7 @@ export default function EditorPage() {
             description: 'Could not generate any banners for download. Check if shops have logos.',
             variant: 'destructive'
         });
-        setIsSending(false); // Add this
+        setIsSending(false);
         return;
       }
 
@@ -463,17 +484,18 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
       <ClientOnly>
         <Header 
           onClearBanner={clearBanner} 
           onDeleteBanner={() => setIsDeleteAlertOpen(true)} 
         />
       </ClientOnly>
-      <main className="flex-1">
+      <main className="flex-1 min-h-0">
         <ClientOnly>
           <BannerEditor
             bannerImage={bannerImage}
+            imageDimensions={imageDimensions}
             handleBannerImageUpload={handleBannerImageUpload}
             elements={elements}
             selectedElement={selectedElement}
