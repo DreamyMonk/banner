@@ -25,9 +25,20 @@ import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
 import { LayersPanel } from './layers-panel';
 import { RecipientsPanel } from './recipients-panel';
-import type { ChangeEvent, Dispatch, SetStateAction, MouseEvent as ReactMouseEvent } from 'react';
+import type {
+  ChangeEvent,
+  Dispatch,
+  SetStateAction,
+  MouseEvent as ReactMouseEvent,
+} from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { DndContext, useDraggable, useSensor, PointerSensor, type DragEndEvent } from '@dnd-kit/core';
+import {
+  DndContext,
+  useDraggable,
+  useSensor,
+  PointerSensor,
+  type DragEndEvent,
+} from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
 interface BannerEditorProps {
@@ -80,7 +91,7 @@ const DraggableElement = ({
     boxSizing: 'border-box' as const,
     cursor: 'move',
   };
-  
+
   return (
     <div
       ref={setNodeRef}
@@ -88,7 +99,10 @@ const DraggableElement = ({
       {...listeners}
       {...attributes}
       className="absolute p-2"
-      onMouseDown={(e) => { e.stopPropagation(); onSelect(element.id); }}
+      onMouseDown={e => {
+        e.stopPropagation();
+        onSelect(element.id);
+      }}
     >
       {element.type === 'logo' && (
         <div className="relative w-full h-full">
@@ -120,14 +134,14 @@ const DraggableElement = ({
           {/* Rotate Handle */}
           <div
             className="absolute -top-6 left-1/2 -translate-x-1/2 w-5 h-5 bg-primary rounded-full cursor-alias flex items-center justify-center"
-            onMouseDown={(e) => onStartInteraction(e, 'rotate', element.id)}
+            onMouseDown={e => onStartInteraction(e, 'rotate', element.id)}
           >
-             <RotateCw className="w-3 h-3 text-primary-foreground" />
+            <RotateCw className="w-3 h-3 text-primary-foreground" />
           </div>
           {/* Resize Handle */}
           <div
             className="absolute -bottom-3 -right-3 w-5 h-5 bg-primary rounded-full cursor-se-resize flex items-center justify-center"
-            onMouseDown={(e) => onStartInteraction(e, 'resize', element.id)}
+            onMouseDown={e => onStartInteraction(e, 'resize', element.id)}
           >
             <Expand className="w-3 h-3 text-primary-foreground" />
           </div>
@@ -136,7 +150,6 @@ const DraggableElement = ({
     </div>
   );
 };
-
 
 export function BannerEditor({
   bannerImage,
@@ -157,7 +170,6 @@ export function BannerEditor({
   emailBody,
   setEmailBody,
 }: BannerEditorProps) {
-  
   const containerRef = useRef<HTMLDivElement>(null);
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
@@ -169,8 +181,17 @@ export function BannerEditor({
     startScale: number;
     centerX: number;
     centerY: number;
-  }>({ type: null, elementId: null, startX: 0, startY: 0, elementNode: null, startRotation: 0, startScale: 0, centerX: 0, centerY: 0 });
-
+  }>({
+    type: null,
+    elementId: null,
+    startX: 0,
+    startY: 0,
+    elementNode: null,
+    startRotation: 0,
+    startScale: 0,
+    centerX: 0,
+    centerY: 0,
+  });
 
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
     // Prevent this from firing if we were resizing/rotating
@@ -178,11 +199,11 @@ export function BannerEditor({
 
     const element = elements.find(el => el.id === active.id);
     if (!element || !containerRef.current) return;
-    
+
     const containerRect = containerRef.current.getBoundingClientRect();
     const newX = element.x + (delta.x / containerRect.width) * 100;
     const newY = element.y + (delta.y / containerRect.height) * 100;
-    
+
     updateElement(active.id as string, {
       x: Math.max(0, Math.min(100, newX)),
       y: Math.max(0, Math.min(100, newY)),
@@ -201,13 +222,13 @@ export function BannerEditor({
     const element = elements.find(el => el.id === elementId);
     const elementNode = e.currentTarget.closest('.absolute') as HTMLElement;
     if (!element || !elementNode) return;
-    
+
     const elemRect = elementNode.getBoundingClientRect();
     const centerX = elemRect.left + elemRect.width / 2;
     const centerY = elemRect.top + elemRect.height / 2;
 
-    interactionRef.current = { 
-      type, 
+    interactionRef.current = {
+      type,
       elementId,
       startX: e.clientX,
       startY: e.clientY,
@@ -222,35 +243,60 @@ export function BannerEditor({
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const interaction = interactionRef.current;
-    if (!interaction.type || !interaction.elementId || !containerRef.current) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const interaction = interactionRef.current;
+      if (!interaction.type || !interaction.elementId || !containerRef.current)
+        return;
 
-    if (interaction.type === 'rotate') {
-        const angle = Math.atan2(e.clientY - interaction.centerY, e.clientX - interaction.centerX) * (180 / Math.PI);
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (interaction.type === 'rotate') {
+        const angle =
+          Math.atan2(
+            e.clientY - interaction.centerY,
+            e.clientX - interaction.centerX
+          ) *
+          (180 / Math.PI);
         updateElement(interaction.elementId, { rotation: Math.round(angle + 90) });
-    }
+      }
 
-    if (interaction.type === 'resize') {
+      if (interaction.type === 'resize') {
         const dx = e.clientX - interaction.startX;
         const dy = e.clientY - interaction.startY;
-        const distance = Math.sqrt(dx*dx + dy*dy);
-        const direction = (e.clientX > interaction.startX || e.clientY > interaction.startY) ? 1 : -1;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const direction =
+          e.clientX > interaction.startX || e.clientY > interaction.startY ? 1 : -1;
 
-        const newScale = interaction.startScale + (distance / containerRef.current.getBoundingClientRect().width) * 100 * direction;
-        updateElement(interaction.elementId, { scale: Math.max(5, Math.min(200, newScale)) });
-    }
-  }, [updateElement]);
+        const newScale =
+          interaction.startScale +
+          (distance / containerRef.current.getBoundingClientRect().width) *
+            100 *
+            direction;
+        updateElement(interaction.elementId, {
+          scale: Math.max(5, Math.min(200, newScale)),
+        });
+      }
+    },
+    [updateElement]
+  );
 
   const handleMouseUp = useCallback(() => {
-    interactionRef.current = { type: null, elementId: null, startX: 0, startY: 0, elementNode: null, startRotation: 0, startScale: 0, centerX: 0, centerY: 0 };
+    interactionRef.current = {
+      type: null,
+      elementId: null,
+      startX: 0,
+      startY: 0,
+      elementNode: null,
+      startRotation: 0,
+      startScale: 0,
+      centerX: 0,
+      centerY: 0,
+    };
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove]);
-
 
   const sensors = useSensor(PointerSensor);
 
@@ -309,7 +355,10 @@ export function BannerEditor({
               </TabsTrigger>
             </TabsList>
           </CardHeader>
-          <TabsContent value="setup" className="flex-1 overflow-y-auto px-6 pb-6">
+          <TabsContent
+            value="setup"
+            className="flex-1 overflow-y-auto px-6 pb-6"
+          >
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-headline mb-2">Banner</h3>
@@ -325,16 +374,10 @@ export function BannerEditor({
               <div>
                 <h3 className="text-lg font-headline mb-2">Elements</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => addElement('logo')}
-                  >
+                  <Button variant="outline" onClick={() => addElement('logo')}>
                     <ImagePlus className="mr-2" /> Logo
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => addElement('text')}
-                  >
+                  <Button variant="outline" onClick={() => addElement('text')}>
                     <Type className="mr-2" /> Text
                   </Button>
                 </div>
@@ -356,11 +399,15 @@ export function BannerEditor({
               )}
             </div>
           </TabsContent>
-          <TabsContent value="send" className="flex-1 flex flex-col px-6 pb-6 overflow-y-auto">
+          <TabsContent
+            value="send"
+            className="flex-1 flex flex-col px-6 pb-6 overflow-y-auto"
+          >
             <div className="space-y-6 flex-1 flex flex-col">
               <div>
                 <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
-                  <Users />Recipients
+                  <Users />
+                  Recipients
                 </h3>
                 <RecipientsPanel
                   groups={groups}
@@ -369,19 +416,17 @@ export function BannerEditor({
                   setSelectedGroups={setSelectedGroups}
                 />
               </div>
-              <div className='flex-1 flex flex-col min-h-0'>
+              <div className="flex-1 flex flex-col min-h-0">
                 <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
-                    <Mail />Email Body
+                  <Mail />
+                  Email Body
                 </h3>
                 <Textarea
-                    placeholder="Enter your email content here. Use {{shopName}} as a placeholder."
-                    className="flex-1"
-                    value={emailBody}
-                    onChange={(e) => setEmailBody(e.target.value)}
+                  placeholder="Enter your email content here. Use {{shopName}} as a placeholder."
+                  className="flex-1"
+                  value={emailBody}
+                  onChange={e => setEmailBody(e.target.value)}
                 />
-                <p className='text-xs text-muted-foreground mt-1'>
-                    You must install the 'Trigger Email' Firebase Extension for this to work.
-                </p>
               </div>
               <Button
                 size="lg"
