@@ -21,6 +21,7 @@ import {
   Expand,
   Mail,
   FileSignature,
+  Download,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
@@ -41,6 +42,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import JSZip from 'jszip';
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -57,6 +59,7 @@ interface BannerEditorProps {
   setSelectedGroups: Dispatch<SetStateAction<string[]>>;
   isSending: boolean;
   handleSend: () => void;
+  handleDownload: () => void;
   handleLayerDragEnd: (event: DragEndEvent) => void;
   emailSubject: string;
   setEmailSubject: Dispatch<SetStateAction<string>>;
@@ -120,7 +123,7 @@ const DraggableElement = ({
       )}
       {element.type === 'text' && (
         <span
-          className="font-headline whitespace-nowrap pointer-events-none"
+          className="font-headline whitespace-nowrap pointer-events-none text-base md:text-lg"
           style={{
             color: element.color,
             fontSize: `calc(${element.scale} / 100 * 4vw + 8px)`,
@@ -169,6 +172,7 @@ export function BannerEditor({
   setSelectedGroups,
   isSending,
   handleSend,
+  handleDownload,
   handleLayerDragEnd,
   emailSubject,
   setEmailSubject,
@@ -264,7 +268,9 @@ export function BannerEditor({
             e.clientX - interaction.centerX
           ) *
           (180 / Math.PI);
-        updateElement(interaction.elementId, { rotation: Math.round(angle + 90) });
+        updateElement(interaction.elementId, {
+          rotation: Math.round(angle + 90),
+        });
       }
 
       if (interaction.type === 'resize') {
@@ -272,7 +278,9 @@ export function BannerEditor({
         const dy = e.clientY - interaction.startY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         const direction =
-          e.clientX > interaction.startX || e.clientY > interaction.startY ? 1 : -1;
+          e.clientX > interaction.startX || e.clientY > interaction.startY
+            ? 1
+            : -1;
 
         const newScale =
           interaction.startScale +
@@ -306,13 +314,13 @@ export function BannerEditor({
   const sensors = useSensor(PointerSensor);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
       <div className="lg:col-span-2">
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
           <div
             id="banner-container"
             ref={containerRef}
-            className="h-full w-full aspect-[1200/630] max-h-[calc(100vh-10rem)] relative overflow-hidden shadow-lg bg-card"
+            className="h-full w-full aspect-[1200/630] max-h-[calc(100vh-10rem)] relative overflow-hidden shadow-lg bg-card rounded-lg"
             onClick={() => setSelectedElementId(null)}
           >
             {bannerImage ? (
@@ -324,10 +332,12 @@ export function BannerEditor({
                 data-ai-hint="social media banner"
               />
             ) : (
-              <div className="flex items-center justify-center h-full bg-muted">
-                <div className="text-center text-muted-foreground">
+              <div className="flex items-center justify-center h-full bg-muted rounded-lg">
+                <div className="text-center text-muted-foreground p-4">
                   <ImagePlus className="mx-auto h-12 w-12" />
-                  <p className="mt-2">Upload a banner to get started</p>
+                  <p className="mt-2 text-sm md:text-base">
+                    Upload a banner to get started
+                  </p>
                 </div>
               </div>
             )}
@@ -356,13 +366,13 @@ export function BannerEditor({
               </TabsTrigger>
               <TabsTrigger value="send">
                 <Send className="w-4 h-4 mr-2" />
-                Send
+                Actions
               </TabsTrigger>
             </TabsList>
           </CardHeader>
           <TabsContent
             value="setup"
-            className="flex-1 overflow-y-auto px-6 pb-6"
+            className="flex-1 overflow-y-auto px-4 md:px-6 pb-6"
           >
             <div className="space-y-6">
               <div>
@@ -406,7 +416,7 @@ export function BannerEditor({
           </TabsContent>
           <TabsContent
             value="send"
-            className="flex-1 flex flex-col px-6 pb-6 overflow-y-auto"
+            className="flex-1 flex flex-col px-4 md:px-6 pb-6 overflow-y-auto"
           >
             <div className="space-y-6 flex-1 flex flex-col">
               <div>
@@ -421,7 +431,7 @@ export function BannerEditor({
                   setSelectedGroups={setSelectedGroups}
                 />
               </div>
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
                   <FileSignature />
                   Email Subject
@@ -444,22 +454,41 @@ export function BannerEditor({
                   onChange={e => setEmailBody(e.target.value)}
                 />
               </div>
-              <Button
-                size="lg"
-                onClick={handleSend}
-                disabled={isSending}
-                className="w-full mt-4"
-              >
-                {isSending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2" /> Generate & Send Banners
-                  </>
-                )}
-              </Button>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                <Button
+                  size="lg"
+                  onClick={handleSend}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2" /> Send Emails
+                    </>
+                  )}
+                </Button>
+                 <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleDownload}
+                  disabled={isSending}
+                  className="w-full"
+                >
+                  {isSending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2" /> Download All
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
