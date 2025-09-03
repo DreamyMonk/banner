@@ -83,7 +83,7 @@ export default function Home() {
     'Your Personalized Banner is Here!'
   );
   const [emailBody, setEmailBody] = useState(
-    'Hi {{shopName}},\n\nHere is your personalized banner!'
+    'Hi {{shopName}},\n\nHere is your personalized banner, attached.'
   );
 
   const sensors = useSensors(
@@ -110,7 +110,7 @@ export default function Home() {
       type,
       x: 50,
       y: 50,
-      scale: type === 'logo' ? 20 : 30,
+      scale: 15, // Default scale in % of banner width
       rotation: 0,
       opacity: 100,
       ...(type === 'text' && {
@@ -252,10 +252,10 @@ export default function Home() {
       setIsSending(false);
     }
   };
-  
+
   const handleDownload = async () => {
     const recipients = getRecipients();
-     if (recipients.length === 0) {
+    if (recipients.length === 0) {
       toast({
         title: 'No Recipients',
         description: 'No shops to generate banners for.',
@@ -271,33 +271,34 @@ export default function Home() {
     });
 
     try {
-        const shopsWithBanners = await generateBannersForRecipients(recipients);
-        if (!shopsWithBanners) {
-          setIsSending(false);
-          return;
-        }
+      const shopsWithBanners = await generateBannersForRecipients(recipients);
+      if (!shopsWithBanners) {
+        setIsSending(false);
+        return;
+      }
 
-        const zip = new JSZip();
-        shopsWithBanners.forEach(shop => {
-            const base64Data = shop.bannerDataUri.split(',')[1];
-            zip.file(`${shop.name.replace(/ /g, '_')}_banner.png`, base64Data, { base64: true });
+      const zip = new JSZip();
+      shopsWithBanners.forEach(shop => {
+        const base64Data = shop.bannerDataUri.split(',')[1];
+        zip.file(`${shop.name.replace(/ /g, '_')}_banner.png`, base64Data, {
+          base64: true,
         });
+      });
 
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(zipBlob);
-        link.download = 'banners.zip';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast({
-            title: 'Download Ready',
-            description: 'Your zip file has been created.',
-        });
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = 'banners.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
+      toast({
+        title: 'Download Ready',
+        description: 'Your zip file has been created.',
+      });
     } catch (error) {
-         const errorMessage =
+      const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';
       toast({
         title: 'Download Failed',
@@ -306,10 +307,9 @@ export default function Home() {
       });
       console.error('Error generating zip:', error);
     } finally {
-        setIsSending(false);
+      setIsSending(false);
     }
-  }
-
+  };
 
   return (
     <ClientOnly>

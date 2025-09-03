@@ -48,17 +48,28 @@ export async function generateImageForShop(
         ctx.drawImage(logoImage, -width / 2, -height / 2, width, height);
 
     } else if (element.type === 'text' && element.text) {
-        const fontSize = (element.scale / 100) * (canvas.height / 15);
+        const fontSize = (element.scale / 100) * (canvas.width / 20);
         ctx.font = `${element.fontWeight || 400} ${fontSize}px "${element.fontFamily || 'Roboto'}", sans-serif`;
         ctx.fillStyle = element.color || '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if (element.letterSpacing) {
-            ctx.letterSpacing = `${element.letterSpacing}px`;
-        }
+        
+        const letterSpacing = element.letterSpacing || 0;
         
         const text = element.text.replace('{{shopName}}', shop.name);
-        ctx.fillText(text, 0, 0);
+
+        if (letterSpacing !== 0) {
+            const chars = text.split('');
+            const totalWidth = ctx.measureText(text).width + (chars.length - 1) * letterSpacing;
+            let currentX = -totalWidth / 2;
+
+            chars.forEach(char => {
+                ctx.fillText(char, currentX, 0);
+                currentX += ctx.measureText(char).width + letterSpacing;
+            });
+        } else {
+             ctx.fillText(text, 0, 0);
+        }
     }
     
     ctx.restore();

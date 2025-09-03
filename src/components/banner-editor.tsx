@@ -22,6 +22,9 @@ import {
   Mail,
   FileSignature,
   Download,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
@@ -43,6 +46,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import JSZip from 'jszip';
+import { cn } from '@/lib/utils';
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -72,7 +76,7 @@ const DraggableElement = ({
   isSelected,
   onSelect,
   onStartInteraction,
-  containerHeight
+  bannerDimensions,
 }: {
   element: BannerElement;
   isSelected: boolean;
@@ -82,27 +86,29 @@ const DraggableElement = ({
     type: 'rotate' | 'resize',
     id: string
   ) => void;
-  containerHeight: number;
+  bannerDimensions: { width: number; height: number };
 }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: element.id,
   });
 
+  const width = (element.scale / 100) * bannerDimensions.width;
+  const fontSize = (element.scale / 100) * (bannerDimensions.width / 20);
+
   const style = {
     left: `${element.x}%`,
     top: `${element.y}%`,
-    width: element.type === 'logo' ? `${element.scale}%` : 'auto',
+    width: element.type === 'logo' ? `${width}px` : 'auto',
     transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
     opacity: element.opacity / 100,
-    aspectRatio: element.type === 'logo' ? '1 / 1' : undefined,
     border: isSelected ? '2px dashed hsl(var(--primary))' : 'none',
     boxSizing: 'border-box' as const,
     cursor: 'move',
   };
-  
+
   const textStyle = {
     color: element.color,
-    fontSize: `${(element.scale / 100) * (containerHeight / 15)}px`,
+    fontSize: `${fontSize}px`,
     fontWeight: element.fontWeight,
     fontFamily: element.fontFamily,
     letterSpacing: `${element.letterSpacing || 0}px`,
@@ -121,7 +127,7 @@ const DraggableElement = ({
       }}
     >
       {element.type === 'logo' && (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full aspect-[1/1]">
           <Image
             src="https://picsum.photos/200/200"
             alt="Placeholder Logo"
@@ -132,24 +138,19 @@ const DraggableElement = ({
         </div>
       )}
       {element.type === 'text' && (
-        <span
-          className="whitespace-nowrap pointer-events-none text-base md:text-lg"
-          style={textStyle}
-        >
+        <span className="whitespace-nowrap pointer-events-none" style={textStyle}>
           {element.text}
         </span>
       )}
 
       {isSelected && (
         <>
-          {/* Rotate Handle */}
           <div
             className="absolute -top-6 left-1/2 -translate-x-1/2 w-5 h-5 bg-primary rounded-full cursor-alias flex items-center justify-center"
             onMouseDown={e => onStartInteraction(e, 'rotate', element.id)}
           >
             <RotateCw className="w-3 h-3 text-primary-foreground" />
           </div>
-          {/* Resize Handle */}
           <div
             className="absolute -bottom-3 -right-3 w-5 h-5 bg-primary rounded-full cursor-se-resize flex items-center justify-center"
             onMouseDown={e => onStartInteraction(e, 'resize', element.id)}
@@ -184,14 +185,40 @@ export function BannerEditor({
   emailBody,
   setEmailBody,
 }: BannerEditorProps) {
+  const editorWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(0);
+  const [bannerDimensions, setBannerDimensions] = useState({ width: 1200, height: 630 });
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    if (bannerImage) {
+      const img = document.createElement('img');
+      img.src = bannerImage;
+      img.onload = () => {
+        setBannerDimensions({ width: img.width, height: img.height });
+      };
+    }
+  }, [bannerImage]);
+
+  useEffect(() => {
+    // Fit canvas to view on load/change
+    if (editorWrapperRef.current && containerRef.current) {
+      const { width: wrapperWidth, height: wrapperHeight } =
+        editorWrapperRef.current.getBoundingClientRect();
+      const newZoom = Math.min(
+        wrapperWidth / (bannerDimensions.width + 40), // Add padding
+        wrapperHeight / (bannerDimensions.height + 40)
+      );
+      setZoom(Math.max(0.1, newZoom));
+    }
+  }, [bannerDimensions]);
+
+
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
     elementId: string | null;
     startX: number;
     startY: number;
-    elementNode: HTMLElement | null;
     startRotation: number;
     startScale: number;
     centerX: number;
@@ -201,39 +228,22 @@ export function BannerEditor({
     elementId: null,
     startX: 0,
     startY: 0,
-    elementNode: null,
     startRotation: 0,
     startScale: 0,
     centerX: 0,
     centerY: 0,
   });
 
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(entries => {
-        if (entries[0]) {
-            setContainerHeight(entries[0].contentRect.height);
-        }
-    });
-
-    if (containerRef.current) {
-        resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-        resizeObserver.disconnect();
-    };
-  }, []);
-
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
-    // Prevent this from firing if we were resizing/rotating
     if (interactionRef.current.type) return;
 
     const element = elements.find(el => el.id === active.id);
     if (!element || !containerRef.current) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newX = element.x + (delta.x / containerRect.width) * 100;
-    const newY = element.y + (delta.y / containerRect.height) * 100;
+    const { width: containerWidth, height: containerHeight } = containerRef.current.getBoundingClientRect();
+
+    const newX = element.x + (delta.x / containerWidth) * 100;
+    const newY = element.y + (delta.y / containerHeight) * 100;
 
     updateElement(active.id as string, {
       x: Math.max(0, Math.min(100, newX)),
@@ -248,13 +258,13 @@ export function BannerEditor({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!containerRef.current) return;
 
     const element = elements.find(el => el.id === elementId);
-    const elementNode = e.currentTarget.closest('.absolute') as HTMLElement;
-    if (!element || !elementNode) return;
+    if (!element || !containerRef.current) return;
 
-    const elemRect = elementNode.getBoundingClientRect();
+    const elemNode = (e.target as HTMLElement).closest('.absolute');
+    if (!elemNode) return;
+    const elemRect = elemNode.getBoundingClientRect();
     const centerX = elemRect.left + elemRect.width / 2;
     const centerY = elemRect.top + elemRect.height / 2;
 
@@ -263,7 +273,6 @@ export function BannerEditor({
       elementId,
       startX: e.clientX,
       startY: e.clientY,
-      elementNode,
       startRotation: element.rotation,
       startScale: element.scale,
       centerX,
@@ -277,58 +286,33 @@ export function BannerEditor({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       const interaction = interactionRef.current;
-      if (!interaction.type || !interaction.elementId || !containerRef.current)
-        return;
+      if (!interaction.type || !interaction.elementId) return;
 
       e.preventDefault();
       e.stopPropagation();
 
       if (interaction.type === 'rotate') {
         const angle =
-          Math.atan2(
-            e.clientY - interaction.centerY,
-            e.clientX - interaction.centerX
-          ) *
+          Math.atan2(e.clientY - interaction.centerY, e.clientX - interaction.centerX) *
           (180 / Math.PI);
-        updateElement(interaction.elementId, {
-          rotation: Math.round(angle + 90),
-        });
+        updateElement(interaction.elementId, { rotation: Math.round(angle + 90) });
       }
 
       if (interaction.type === 'resize') {
         const dx = e.clientX - interaction.startX;
         const dy = e.clientY - interaction.startY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const direction =
-          e.clientX > interaction.startX || e.clientY > interaction.startY
-            ? 1
-            : -1;
-
-        const newScale =
-          interaction.startScale +
-          (distance / containerRef.current.getBoundingClientRect().width) *
-            100 *
-            direction;
-        updateElement(interaction.elementId, {
-          scale: Math.max(5, Math.min(200, newScale)),
-        });
+        const direction = e.clientX > interaction.startX || e.clientY > interaction.startY ? 1 : -1;
+        
+        const newScale = interaction.startScale + (distance / bannerDimensions.width) * 100 * direction;
+        updateElement(interaction.elementId, { scale: Math.max(1, Math.min(200, newScale)) });
       }
     },
-    [updateElement]
+    [updateElement, bannerDimensions.width]
   );
 
   const handleMouseUp = useCallback(() => {
-    interactionRef.current = {
-      type: null,
-      elementId: null,
-      startX: 0,
-      startY: 0,
-      elementNode: null,
-      startRotation: 0,
-      startScale: 0,
-      centerX: 0,
-      centerY: 0,
-    };
+    interactionRef.current.type = null;
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleMouseUp);
   }, [handleMouseMove]);
@@ -337,12 +321,18 @@ export function BannerEditor({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative" ref={editorWrapperRef}>
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
           <div
             id="banner-container"
             ref={containerRef}
-            className="h-full w-full aspect-[1200/630] max-h-[calc(100vh-10rem)] relative overflow-hidden shadow-lg bg-card rounded-lg"
+            className="relative overflow-hidden shadow-lg bg-card rounded-lg flex-shrink-0"
+            style={{
+              width: bannerDimensions.width,
+              height: bannerDimensions.height,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'center center',
+            }}
             onClick={() => setSelectedElementId(null)}
           >
             {bannerImage ? (
@@ -352,9 +342,10 @@ export function BannerEditor({
                 fill
                 className="object-cover"
                 data-ai-hint="social media banner"
+                unoptimized
               />
             ) : (
-              <div className="flex items-center justify-center h-full bg-muted rounded-lg">
+              <div className="flex items-center justify-center h-full bg-muted">
                 <div className="text-center text-muted-foreground p-4">
                   <ImagePlus className="mx-auto h-12 w-12" />
                   <p className="mt-2 text-sm md:text-base">
@@ -371,11 +362,16 @@ export function BannerEditor({
                 onSelect={setSelectedElementId}
                 onStartInteraction={handleInteractionStart}
                 isSelected={selectedElement?.id === element.id}
-                containerHeight={containerHeight}
+                bannerDimensions={bannerDimensions}
               />
             ))}
           </div>
         </DndContext>
+         <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
+            <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}><ZoomOut /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setZoom(1)}><Maximize /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.min(3, z + 0.1))}><ZoomIn /></Button>
+        </div>
       </div>
 
       <Card className="shadow-lg">
@@ -494,7 +490,7 @@ export function BannerEditor({
                     </>
                   )}
                 </Button>
-                 <Button
+                <Button
                   size="lg"
                   variant="outline"
                   onClick={handleDownload}
