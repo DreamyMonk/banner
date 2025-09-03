@@ -31,6 +31,7 @@ import {
   DocumentData,
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { ClientOnly } from '@/components/client-only';
 
 const db = getFirestore(app);
 
@@ -215,6 +216,7 @@ export default function Home() {
   };
 
   return (
+    <ClientOnly>
     <div className="flex flex-col min-h-screen bg-background">
       <Header
         shops={shops}
@@ -242,5 +244,6 @@ export default function Home() {
         />
       </main>
     </div>
+    </ClientOnly>
   );
 }
