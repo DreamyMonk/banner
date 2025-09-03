@@ -258,7 +258,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                       <SelectValue placeholder="Assign to a group" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
                       {groups.map(group => (
                         <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
                       ))}
