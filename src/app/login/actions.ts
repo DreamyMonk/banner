@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { sign } from '@/lib/auth';
 
 // Use environment variable and provide a default for local development
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'password'; 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password'; 
 
 export async function login(password: string) {
   if (password === ADMIN_PASSWORD) {
