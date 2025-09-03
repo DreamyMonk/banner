@@ -46,9 +46,10 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import JSZip from 'jszip';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -432,47 +433,49 @@ export function BannerEditor({
           </CardHeader>
           <TabsContent
             value="setup"
-            className="flex-1 overflow-y-auto px-4 md:px-6 pb-6"
+            className="flex-1 overflow-y-auto"
           >
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-headline mb-2">Banner</h3>
-                <Input
-                  id="banner-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleBannerImageUpload}
-                  className="file:text-primary file:font-semibold"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-headline mb-2">Elements</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={() => addElement('logo')}>
-                    <ImagePlus className="mr-2" /> Logo
-                  </Button>
-                  <Button variant="outline" onClick={() => addElement('text')}>
-                    <Type className="mr-2" /> Text
-                  </Button>
+            <ScrollArea className="h-full pr-6 pl-4 pb-4">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-headline mb-2">Banner</h3>
+                  <Input
+                    id="banner-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerImageUpload}
+                    className="file:text-primary file:font-semibold"
+                  />
                 </div>
-              </div>
 
-              <LayersPanel
-                elements={elements}
-                selectedElementId={selectedElement?.id ?? null}
-                setSelectedElementId={setSelectedElementId}
-                removeElement={removeElement}
-                onDragEnd={handleLayerDragEnd}
-              />
+                <div>
+                  <h3 className="text-lg font-headline mb-2">Elements</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={() => addElement('logo')}>
+                      <ImagePlus className="mr-2" /> Logo
+                    </Button>
+                    <Button variant="outline" onClick={() => addElement('text')}>
+                      <Type className="mr-2" /> Text
+                    </Button>
+                  </div>
+                </div>
 
-              {selectedElement && (
-                <ElementInspector
-                  element={selectedElement}
-                  updateElement={updateElement}
+                <LayersPanel
+                  elements={elements}
+                  selectedElementId={selectedElement?.id ?? null}
+                  setSelectedElementId={setSelectedElementId}
+                  removeElement={removeElement}
+                  onDragEnd={handleLayerDragEnd}
                 />
-              )}
-            </div>
+
+                {selectedElement && (
+                  <ElementInspector
+                    element={selectedElement}
+                    updateElement={updateElement}
+                  />
+                )}
+              </div>
+            </ScrollArea>
           </TabsContent>
           <TabsContent
             value="send"

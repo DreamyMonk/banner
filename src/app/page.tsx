@@ -246,6 +246,7 @@ export default function Home() {
             description: 'Could not generate any banners. Check if shops have logos.',
             variant: 'destructive'
         });
+        setIsSending(false); // Add this
         return;
       }
 
@@ -304,6 +305,7 @@ export default function Home() {
             description: 'Could not generate banners for sharing. Check if shops have logos and phone numbers.',
             variant: 'destructive'
         });
+        setIsSending(false); // Add this
         return;
       }
 
@@ -358,6 +360,7 @@ export default function Home() {
             description: 'Could not generate any banners for download. Check if shops have logos.',
             variant: 'destructive'
         });
+        setIsSending(false); // Add this
         return;
       }
 

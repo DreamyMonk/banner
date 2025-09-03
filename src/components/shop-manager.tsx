@@ -266,11 +266,11 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 </div>
                  <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" value={formData.phone} onChange={handleInputChange} />
+                  <Input id="phone" value={formData.phone ?? ''} onChange={handleInputChange} />
                 </div>
                  <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" value={formData.address} onChange={handleInputChange} />
+                  <Input id="address" value={formData.address ?? ''} onChange={handleInputChange} />
                 </div>
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="logo">Logo</Label>

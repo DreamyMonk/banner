@@ -23,8 +23,12 @@ export async function getBannerForPhone(phone: string): Promise<{ name: string; 
     
     // Check for expiration server-side as well
     const createdAtTimestamp = docData.createdAt as Timestamp;
+    if (!createdAtTimestamp) {
+        return { error: 'Banner data is incomplete, missing creation date.' };
+    }
     const createdAtDate = createdAtTimestamp.toDate();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
     if (createdAtDate < twentyFourHoursAgo) {
         return { error: 'This download link has expired.' };
     }
