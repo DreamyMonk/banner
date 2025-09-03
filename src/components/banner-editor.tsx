@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -210,21 +209,34 @@ export function BannerEditor({
       img.onload = () => {
         setBannerDimensions({ width: img.width, height: img.height });
       };
+    } else {
+      // Reset to default if no image
+      setBannerDimensions({ width: 1200, height: 630 });
     }
   }, [bannerImage]);
 
-  useEffect(() => {
-    // Fit canvas to view on load/change
+  const fitCanvasToView = useCallback(() => {
     if (editorWrapperRef.current && containerRef.current) {
       const { width: wrapperWidth, height: wrapperHeight } =
         editorWrapperRef.current.getBoundingClientRect();
       const newZoom = Math.min(
-        wrapperWidth / (bannerDimensions.width + 40), // Add padding
-        wrapperHeight / (bannerDimensions.height + 40)
+        (wrapperWidth - 40) / bannerDimensions.width,
+        (wrapperHeight - 40) / bannerDimensions.height
       );
       setZoom(Math.max(0.1, newZoom));
     }
-  }, [bannerDimensions, bannerImage]);
+  }, [bannerDimensions]);
+
+  useEffect(() => {
+    fitCanvasToView();
+  }, [bannerDimensions, fitCanvasToView]);
+
+  useEffect(() => {
+    const handleResize = () => fitCanvasToView();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fitCanvasToView]);
+
 
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
@@ -403,7 +415,7 @@ export function BannerEditor({
           >
             <ZoomOut />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setZoom(1)}>
+          <Button variant="ghost" size="icon" onClick={fitCanvasToView}>
             <Maximize />
           </Button>
           <Button
