@@ -8,6 +8,10 @@ export async function middleware(request: NextRequest) {
 
   const isApiCron = request.nextUrl.pathname.startsWith('/api/cron');
   if (isApiCron) {
+    const authHeader = request.headers.get('authorization');
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
     return NextResponse.next();
   }
 

@@ -15,8 +15,8 @@ import {
   where,
   getDocs,
   writeBatch,
+  limit,
 } from 'firebase/firestore';
-import { randomUUID } from 'crypto';
 
 const db = getFirestore(app);
 
@@ -176,6 +176,21 @@ export async function generateAndSendBanners(
 }
 
 export async function shareBannersByLink(shops: ShopWithBanner[]) {
+  // First, delete any existing banners for the same phone numbers
+  const phones = shops.map(s => s.phone).filter(Boolean);
+  if (phones.length > 0) {
+    const q = query(collection(db, "sharedBanners"), where("phone", "in", phones));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        const batch = writeBatch(db);
+        querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        console.log(`Deleted ${querySnapshot.size} existing banners for updated shops.`);
+    }
+  }
+
   const results = await Promise.all(
     shops.map(async shop => {
       try {
@@ -183,19 +198,14 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
           throw new Error(`Banner or phone number for ${shop.name} is missing.`);
         }
         
-        const uniqueId = randomUUID();
         await addDoc(collection(db, 'sharedBanners'), {
             shopName: shop.name,
             phone: shop.phone,
             bannerDataUri: shop.bannerDataUri,
             createdAt: serverTimestamp(),
-            accessId: uniqueId,
         });
-        
-        // This function no longer sends an email. It just prepares the link.
-        // The admin can share the link: /download?id=${uniqueId}
 
-        return { success: true, shopName: shop.name, accessId: uniqueId };
+        return { success: true, shopName: shop.name };
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'An unknown error occurred';
