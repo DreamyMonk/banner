@@ -70,8 +70,7 @@ async function sendEmail(
 
 function generateEmailHTML(
   shop: Shop,
-  emailBody: string,
-  options: { bannerCid?: string; downloadLink?: string } = {}
+  emailBody: string
 ): string {
   const personalizedBody = emailBody
     .replace(/{{shopName}}/g, shop.name)
@@ -79,10 +78,6 @@ function generateEmailHTML(
     .replace(/{{phone}}/g, shop.phone || '')
     .replace(/{{email}}/g, shop.email || '')
     .replace(/\n/g, '<br>');
-
-  const downloadButton = options.downloadLink
-    ? `<a href="${options.downloadLink}" style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 16px;">Download Your Banner</a>`
-    : '';
 
   return `
     <!DOCTYPE html>
@@ -124,7 +119,6 @@ function generateEmailHTML(
             <div class="content">
                 ${personalizedBody}
             </div>
-            ${downloadButton ? `<div style="text-align: center;">${downloadButton}</div>` : ''}
             <p class="footer">Powered by Banners from Zedsu</p>
         </div>
     </body>
@@ -144,6 +138,12 @@ export async function generateAndSendBanners(
           throw new Error(`Banner for ${shop.name} is missing.`);
         }
 
+        const personalizedSubject = emailSubject
+          .replace(/{{shopName}}/g, shop.name)
+          .replace(/{{address}}/g, shop.address || '')
+          .replace(/{{phone}}/g, shop.phone || '')
+          .replace(/{{email}}/g, shop.email || '');
+
         const emailHtml = generateEmailHTML(shop, emailBody);
 
         const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
@@ -153,12 +153,6 @@ export async function generateAndSendBanners(
           Filename: 'banner.png',
           Base64Content: bannerBase64,
         };
-
-        const personalizedSubject = emailSubject
-          .replace(/{{shopName}}/g, shop.name)
-          .replace(/{{address}}/g, shop.address || '')
-          .replace(/{{phone}}/g, shop.phone || '')
-          .replace(/{{email}}/g, shop.email || '');
 
         await sendEmail(
           shop.email,
@@ -197,18 +191,11 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
             createdAt: serverTimestamp(),
             accessId: uniqueId,
         });
-
-        const downloadLink = `${process.env.NEXT_PUBLIC_BASE_URL}/download?id=${uniqueId}`;
         
-        const emailBody = `Hi {{shopName}},\n\nYour personalized banner is ready! Click the link below to view and download it.\n\nFor security, you will be asked to verify your phone number.`;
-        const emailSubject = `Your Banner for {{shopName}} is Ready`;
+        // This function no longer sends an email. It just prepares the link.
+        // The admin can share the link: /download?id=${uniqueId}
 
-        const personalizedSubject = emailSubject.replace(/{{shopName}}/g, shop.name);
-        const emailHtml = generateEmailHTML(shop, emailBody, { downloadLink });
-
-        await sendEmail(shop.email, 'banner@zedsu.com', personalizedSubject, emailHtml);
-
-        return { success: true, shopName: shop.name };
+        return { success: true, shopName: shop.name, accessId: uniqueId };
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'An unknown error occurred';

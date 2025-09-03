@@ -268,7 +268,7 @@ export default function Home() {
 
     setIsSending(true);
     toast({
-      title: 'Generating & Sharing Links...',
+      title: 'Generating Links...',
       description: `Processing ${recipients.length} shops.`,
     });
 
@@ -284,11 +284,12 @@ export default function Home() {
       const errorCount = results.length - successCount;
 
       toast({
-        title: 'Sharing Complete',
-        description: `Shared ${successCount} links successfully. ${
+        title: 'Link Generation Complete',
+        description: `Created ${successCount} shareable links. ${
           errorCount > 0 ? `${errorCount} failed.` : ''
-        }`,
+        } You can now provide these links to your clients.`,
         variant: errorCount > 0 ? 'destructive' : 'default',
+        duration: 9000
       });
     } catch (error) {
       const errorMessage =
