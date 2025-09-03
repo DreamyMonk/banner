@@ -20,11 +20,6 @@ import {
 
 const db = getFirestore(app);
 
-const mailjet = new Mailjet({
-  apiKey: process.env.MAILJET_API_KEY,
-  apiSecret: process.env.MAILJET_SECRET_KEY,
-});
-
 interface Attachment {
   ContentType: string;
   Filename: string;
@@ -42,6 +37,15 @@ async function sendEmail(
   html: string,
   attachments?: Attachment[]
 ) {
+  if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
+    throw new Error('Mailjet API keys are not configured.');
+  }
+  
+  const mailjet = new Mailjet({
+    apiKey: process.env.MAILJET_API_KEY,
+    apiSecret: process.env.MAILJET_SECRET_KEY,
+  });
+
   console.log(`Sending email via Mailjet to: ${to}`);
   const requestData = {
     Messages: [
