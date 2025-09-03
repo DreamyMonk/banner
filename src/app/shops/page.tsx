@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import {
   collection,
@@ -51,8 +52,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, Plus, Trash2, Edit, X, ArrowLeft } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, Plus, Trash2, Edit, X, ArrowLeft, Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const initialShopState: Omit<Shop, 'id'> = {
   name: '',
@@ -71,6 +72,7 @@ export default function ShopsPage() {
   const [formData, setFormData] = useState<Omit<Shop, 'id'>>(initialShopState);
   const [newGroup, setNewGroup] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const db = getFirestore(app);
@@ -112,6 +114,15 @@ export default function ShopsPage() {
       setLogoPreview(null);
     }
   }, [isEditing]);
+
+  const filteredShops = useMemo(() => {
+    if (!searchTerm) return shops;
+    return shops.filter(shop =>
+      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shop.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (shop.phone && shop.phone.includes(searchTerm))
+    );
+  }, [shops, searchTerm]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -243,7 +254,7 @@ export default function ShopsPage() {
           Shop & Group Management
         </h1>
         <Button asChild variant="outline">
-          <Link href="/">
+          <Link href="/editor">
             <ArrowLeft />
             Back to Editor
           </Link>
@@ -254,6 +265,19 @@ export default function ShopsPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Shops</CardTitle>
+             <CardDescription>
+                A list of all shops. You can search by name, email, or phone.
+            </CardDescription>
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search shops..."
+                    className="w-full pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[60vh] border rounded-md">
@@ -268,7 +292,7 @@ export default function ShopsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shops.map(shop => (
+                  {filteredShops.map(shop => (
                     <TableRow key={shop.id}>
                       <TableCell className="font-medium">{shop.name}</TableCell>
                       <TableCell>{shop.email}</TableCell>
@@ -469,3 +493,5 @@ export default function ShopsPage() {
     </div>
   );
 }
+
+    
