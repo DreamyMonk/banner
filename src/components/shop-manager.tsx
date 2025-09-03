@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ChangeEvent } from 'react';
 import {
   Sheet,
@@ -52,13 +53,44 @@ interface ShopManagerProps {
   groups: Group[];
 }
 
+const initialShopState: Omit<Shop, 'id'> = {
+  name: '',
+  email: '',
+  logo: '',
+  groups: [],
+};
+
 export function ShopManager({ shops, groups }: ShopManagerProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState<Shop | null>(null);
-  const [newShop, setNewShop] = useState<Omit<Shop, 'id'>>({ name: '', email: '', logo: '', groups: [] as string[] });
+  const [formData, setFormData] = useState<Omit<Shop, 'id'>>(initialShopState);
   const [newGroup, setNewGroup] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      setFormData({
+        name: isEditing.name,
+        email: isEditing.email,
+        logo: isEditing.logo,
+        groups: isEditing.groups || [],
+      });
+      setLogoPreview(isEditing.logo);
+    } else {
+      setFormData(initialShopState);
+      setLogoPreview(null);
+    }
+  }, [isEditing]);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+  
+  const handleGroupChange = (value: string) => {
+    setFormData(prev => ({ ...prev, groups: value ? [value] : [] }));
+  };
 
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,7 +98,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
-        setNewShop(prev => ({ ...prev, logo: result }));
+        setFormData(prev => ({ ...prev, logo: result }));
         setLogoPreview(result);
       };
       reader.readAsDataURL(file);
@@ -74,18 +106,18 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   };
 
   const handleSaveShop = async () => {
-    if (!newShop.name || !newShop.email || !newShop.logo) {
+    if (!formData.name || !formData.email || !formData.logo) {
       toast({ title: 'Missing Information', description: 'Please fill out all fields.', variant: 'destructive' });
       return;
     }
 
     try {
       if (isEditing) {
-        await updateShop({ ...isEditing, ...newShop });
-        toast({ title: 'Shop Updated', description: `Updated details for ${newShop.name}.` });
+        await updateShop({ ...isEditing, ...formData });
+        toast({ title: 'Shop Updated', description: `Updated details for ${formData.name}.` });
       } else {
-        await addShop(newShop);
-        toast({ title: 'Shop Added', description: `${newShop.name} has been added.` });
+        await addShop(formData);
+        toast({ title: 'Shop Added', description: `${formData.name} has been added.` });
       }
       resetForm();
     } catch (error) {
@@ -96,8 +128,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
 
   const handleEdit = (shop: Shop) => {
     setIsEditing(shop);
-    setNewShop({ name: shop.name, email: shop.email, logo: shop.logo, groups: shop.groups || [] });
-    setLogoPreview(shop.logo);
   };
   
   const handleDelete = async (shopId: string) => {
@@ -112,8 +142,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   
   const resetForm = () => {
     setIsEditing(null);
-    setNewShop({ name: '', email: '', logo: '', groups: [] });
-    setLogoPreview(null);
   };
 
   const handleAddGroup = async () => {
@@ -121,6 +149,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
       try {
         await addGroup(newGroup);
         setNewGroup('');
+        toast({ title: 'Group Added', description: `Added group: ${newGroup}` });
       } catch (error) {
         console.error("Failed to add group:", error);
         toast({ title: 'Error', description: 'Could not add group.', variant: 'destructive' });
@@ -131,7 +160,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   const handleDeleteGroup = async (groupId: string) => {
     try {
       await deleteGroup(groupId);
-      // Firestore listeners will handle updating the UI
     } catch (error) {
         console.error("Failed to delete group:", error);
         toast({ title: 'Error', description: 'Could not delete group.', variant: 'destructive' });
@@ -209,11 +237,11 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
               <div className="space-y-4 p-4 border rounded-md">
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="name">Shop Name</Label>
-                  <Input id="name" value={newShop.name} onChange={e => setNewShop({ ...newShop, name: e.target.value })} />
+                  <Input id="name" value={formData.name} onChange={handleInputChange} />
                 </div>
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={newShop.email} onChange={e => setNewShop({ ...newShop, email: e.target.value })} />
+                  <Input id="email" type="email" value={formData.email} onChange={handleInputChange} />
                 </div>
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="logo">Logo</Label>
@@ -223,13 +251,14 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 <div className="grid w-full items-center gap-1.5">
                   <Label>Groups</Label>
                   <Select
-                    value={newShop.groups.length > 0 ? newShop.groups[0] : ''}
-                    onValueChange={val => setNewShop({ ...newShop, groups: val ? [val] : [] })}
+                    value={(formData.groups && formData.groups[0]) || ''}
+                    onValueChange={handleGroupChange}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Assign to a group" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="">None</SelectItem>
                       {groups.map(group => (
                         <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>
                       ))}
@@ -248,7 +277,21 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 {groups.map(group => (
                   <div key={group.id} className="flex items-center justify-between bg-muted p-2 rounded-md">
                     <span className="text-sm font-medium">{group.name}</span>
-                    <Button variant="ghost" size="icon" className='h-6 w-6' onClick={() => handleDeleteGroup(group.id)}><X className="h-4 w-4" /></Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className='h-6 w-6'><X className="h-4 w-4" /></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete {group.name}?</AlertDialogTitle>
+                            <AlertDialogDescription>This will remove the group but not the shops inside it.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteGroup(group.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 ))}
                 <div className="flex gap-2">
