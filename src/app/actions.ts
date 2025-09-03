@@ -212,34 +212,6 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
   }
 }
 
-
-export async function addShop(shop: Omit<Shop, 'id'>) {
-  await addDoc(collection(db, 'shops'), shop);
-}
-
-export async function updateShop(shop: Shop) {
-  await updateDoc(doc(db, 'shops', shop.id), {
-    name: shop.name,
-    email: shop.email,
-    logo: shop.logo,
-    groups: shop.groups,
-    address: shop.address,
-    phone: shop.phone,
-  });
-}
-
-export async function deleteShop(shopId: string) {
-  await deleteDoc(doc(db, 'shops', shopId));
-}
-
-export async function addGroup(groupName: string) {
-  await addDoc(collection(db, 'groups'), { name: groupName });
-}
-
-export async function deleteGroup(groupId: string) {
-  await deleteDoc(doc(db, 'groups', groupId));
-}
-
 export async function cleanupExpiredBanners() {
   console.log('Running cleanup for expired banners...');
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);

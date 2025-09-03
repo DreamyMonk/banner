@@ -1,7 +1,8 @@
 'use client';
 
-import { ShopManager } from './shop-manager';
-import type { Shop, Group } from '@/lib/types';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -23,23 +24,19 @@ const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-interface HeaderProps {
-  shops: Shop[];
-  groups: Group[];
-}
-
-export function Header({ shops, groups }: HeaderProps) {
+export function Header() {
   return (
     <header className="flex items-center justify-between p-4 border-b bg-card">
       <div className="flex items-center gap-2">
         <BeeIcon className="w-8 h-8 text-primary" />
         <h1 className="text-2xl font-headline text-foreground">BannerBee</h1>
       </div>
-      <div className='flex items-center gap-4'>
-        <ShopManager
-          shops={shops}
-          groups={groups}
-        />
+      <div className="flex items-center gap-4">
+        <Button asChild>
+          <Link href="/shops">
+            <Users className="mr-2" /> Manage Shops
+          </Link>
+        </Button>
       </div>
     </header>
   );

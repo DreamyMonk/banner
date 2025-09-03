@@ -401,7 +401,7 @@ export default function Home() {
   return (
     <ClientOnly>
       <div className="flex flex-col h-screen bg-background">
-        <Header shops={shops} groups={groups} />
+        <Header />
         <main className="flex-1 overflow-hidden">
           <BannerEditor
             bannerImage={bannerImage}
