@@ -102,7 +102,7 @@ export default function Home() {
       type,
       x: 50,
       y: 50,
-      scale: type === 'logo' ? 20 : 10,
+      scale: type === 'logo' ? 20 : 30,
       rotation: 0,
       opacity: 100,
       ...(type === 'text' && {

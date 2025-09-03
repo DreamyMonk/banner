@@ -17,12 +17,15 @@ import {
   Send,
   Loader2,
   Settings2,
+  RotateCw,
+  Expand,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
 import { LayersPanel } from './layers-panel';
 import { RecipientsPanel } from './recipients-panel';
-import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import type { ChangeEvent, Dispatch, SetStateAction, MouseEvent as ReactMouseEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { DndContext, useDraggable, useSensor, PointerSensor, type DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -46,16 +49,20 @@ interface BannerEditorProps {
 
 const DraggableElement = ({
   element,
-  updateElement,
-  setSelectedElementId,
   isSelected,
+  onSelect,
+  onStartInteraction,
 }: {
   element: BannerElement;
-  updateElement: (id: string, newProps: Partial<BannerElement>) => void;
-  setSelectedElementId: (id: string | null) => void;
   isSelected: boolean;
+  onSelect: (id: string) => void;
+  onStartInteraction: (
+    e: ReactMouseEvent,
+    type: 'rotate' | 'resize',
+    id: string
+  ) => void;
 }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: element.id,
   });
 
@@ -63,7 +70,6 @@ const DraggableElement = ({
     left: `${element.x}%`,
     top: `${element.y}%`,
     width: element.type === 'logo' ? `${element.scale}%` : 'auto',
-    height: element.type === 'logo' ? 'auto' : `${element.scale}%`,
     transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
     opacity: element.opacity / 100,
     aspectRatio: element.type === 'logo' ? '1 / 1' : undefined,
@@ -79,8 +85,8 @@ const DraggableElement = ({
       {...listeners}
       {...attributes}
       className="absolute p-2"
-      onClick={(e) => { e.stopPropagation(); setSelectedElementId(element.id); }}
-      onMouseDown={(e) => { e.stopPropagation(); setSelectedElementId(element.id); }}
+      onClick={(e) => { e.stopPropagation(); onSelect(element.id); }}
+      onMouseDown={(e) => { e.stopPropagation(); onSelect(element.id); }}
     >
       {element.type === 'logo' && (
         <div className="relative w-full h-full">
@@ -98,13 +104,32 @@ const DraggableElement = ({
           className="font-headline whitespace-nowrap pointer-events-none"
           style={{
             color: element.color,
-            fontSize: 'clamp(8px, 4vw, 120px)', // Responsive font size
+            fontSize: `calc(${element.scale} / 100 * 4vw + 8px)`,
             fontWeight: element.fontWeight,
             textShadow: '1px 1px 3px rgba(0,0,0,0.5)',
           }}
         >
           {element.text}
         </span>
+      )}
+
+      {isSelected && (
+        <>
+          {/* Rotate Handle */}
+          <div
+            className="absolute -top-6 left-1/2 -translate-x-1/2 w-5 h-5 bg-primary rounded-full cursor-alias flex items-center justify-center"
+            onMouseDown={(e) => onStartInteraction(e, 'rotate', element.id)}
+          >
+             <RotateCw className="w-3 h-3 text-primary-foreground" />
+          </div>
+          {/* Resize Handle */}
+          <div
+            className="absolute -bottom-3 -right-3 w-5 h-5 bg-primary rounded-full cursor-se-resize flex items-center justify-center"
+            onMouseDown={(e) => onStartInteraction(e, 'resize', element.id)}
+          >
+            <Expand className="w-3 h-3 text-primary-foreground" />
+          </div>
+        </>
       )}
     </div>
   );
@@ -129,22 +154,82 @@ export function BannerEditor({
   handleLayerDragEnd,
 }: BannerEditorProps) {
   
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [interaction, setInteraction] = useState<{
+    type: 'rotate' | 'resize' | null;
+    elementId: string | null;
+  }>({ type: null, elementId: null });
+
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
     const element = elements.find(el => el.id === active.id);
-    if (!element) return;
+    if (!element || !containerRef.current) return;
     
-    // This needs to be relative to the container size
-    const container = document.getElementById('banner-container');
-    if (!container) return;
-
-    const newX = element.x + (delta.x / container.clientWidth) * 100;
-    const newY = element.y + (delta.y / container.clientHeight) * 100;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newX = element.x + (delta.x / containerRect.width) * 100;
+    const newY = element.y + (delta.y / containerRect.height) * 100;
     
     updateElement(active.id as string, {
       x: Math.max(0, Math.min(100, newX)),
       y: Math.max(0, Math.min(100, newY)),
     });
   };
+
+  const handleInteractionStart = (
+    e: ReactMouseEvent,
+    type: 'rotate' | 'resize',
+    elementId: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInteraction({ type, elementId });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!interaction.type || !interaction.elementId || !containerRef.current) return;
+    
+    const element = elements.find(el => el.id === interaction.elementId);
+    if (!element) return;
+
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const elementNode = containerRef.current.querySelector(`[data-kit-node="draggable"][id="${element.id}"]`) as HTMLElement;
+    if (!elementNode) return;
+
+    const elemRect = elementNode.getBoundingClientRect();
+    const centerX = elemRect.left + elemRect.width / 2;
+    const centerY = elemRect.top + elemRect.height / 2;
+
+    if (interaction.type === 'rotate') {
+        const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+        updateElement(element.id, { rotation: Math.round(angle + 90) });
+    }
+
+    if (interaction.type === 'resize') {
+        const dx = e.clientX - centerX;
+        const dy = e.clientY - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // This is a simplified scale calculation.
+        // A more robust solution might compare to the element's original dimensions.
+        const originalDiagonal = Math.sqrt(Math.pow(elemRect.width, 2) + Math.pow(elemRect.height, 2));
+        const newScale = (distance * 2 / originalDiagonal) * element.scale;
+
+        updateElement(element.id, { scale: Math.max(1, Math.min(200, newScale)) });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setInteraction({ type: null, elementId: null });
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [interaction, elements]);
+
 
   const sensors = useSensor(PointerSensor);
 
@@ -154,6 +239,7 @@ export function BannerEditor({
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
           <div
             id="banner-container"
+            ref={containerRef}
             className="h-full w-full aspect-[1200/630] max-h-[calc(100vh-10rem)] relative overflow-hidden shadow-lg bg-card"
             onClick={() => setSelectedElementId(null)}
           >
@@ -178,8 +264,8 @@ export function BannerEditor({
               <DraggableElement
                 key={element.id}
                 element={element}
-                updateElement={updateElement}
-                setSelectedElementId={setSelectedElementId}
+                onSelect={setSelectedElementId}
+                onStartInteraction={handleInteractionStart}
                 isSelected={selectedElement?.id === element.id}
               />
             ))}

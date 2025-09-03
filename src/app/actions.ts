@@ -42,7 +42,8 @@ function generateHTML(shop: Shop, bannerImage: string, elements: BannerElement[]
       }
 
       if (element.type === 'text') {
-        return `<span style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;color:${element.color};font-weight:${element.fontWeight};font-size:clamp(8px, 4vw, 120px);font-family:Belleza, sans-serif;white-space:nowrap;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">${element.text?.replace('{{shopName}}', shop.name)}</span>`
+        const fontSize = `calc(${element.scale} / 100 * 4vw + 8px)`;
+        return `<span style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;color:${element.color};font-weight:${element.fontWeight};font-size:${fontSize};font-family:Belleza, sans-serif;white-space:nowrap;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">${element.text?.replace('{{shopName}}', shop.name)}</span>`
       }
       return '';
     }).join('');
