@@ -16,9 +16,9 @@ export async function middleware(request: NextRequest) {
   
   const publicPaths = ['/login', '/download'];
   
-  // Redirect root to /editor
+  // Redirect root to /download
   if (request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/editor', request.url));
+    return NextResponse.redirect(new URL('/download', request.url));
   }
   
   if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
