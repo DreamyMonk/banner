@@ -123,12 +123,12 @@ const DraggableElement = ({
       )}
       {element.type === 'text' && (
         <span
-          className="font-headline whitespace-nowrap pointer-events-none text-base md:text-lg"
+          className="whitespace-nowrap pointer-events-none text-base md:text-lg"
           style={{
             color: element.color,
             fontSize: `calc(${element.scale} / 100 * 4vw + 8px)`,
             fontWeight: element.fontWeight,
-            textShadow: '1px 1px 3px rgba(0,0,0,0.5)',
+            fontFamily: element.fontFamily,
           }}
         >
           {element.text}

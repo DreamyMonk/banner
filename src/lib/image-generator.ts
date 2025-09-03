@@ -54,12 +54,6 @@ export async function generateImageForShop(
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Add text shadow
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.shadowBlur = 3;
-
         const text = element.text.replace('{{shopName}}', shop.name);
         ctx.fillText(text, 0, 0);
     }
