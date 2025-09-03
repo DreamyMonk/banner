@@ -73,30 +73,37 @@ export function ElementInspector({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="space-y-2 flex-1">
-              <Label htmlFor="text-color">Color</Label>
-              <Input
-                id="text-color"
-                type="color"
-                value={element.color}
-                onChange={e => handleValueChange('color', e.target.value)}
-                className="p-1"
-              />
-            </div>
-            <div className="space-y-2 flex-1">
-              <Label htmlFor="font-weight">Font Weight</Label>
-              <Slider
-                id="font-weight"
-                value={[element.fontWeight || 400]}
-                onValueChange={val =>
-                  handleValueChange('fontWeight', val[0])
-                }
-                min={100}
-                max={900}
-                step={100}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="text-color">Color</Label>
+            <Input
+              id="text-color"
+              type="color"
+              value={element.color}
+              onChange={e => handleValueChange('color', e.target.value)}
+              className="p-1 h-10"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Font Weight ({element.fontWeight})</Label>
+            <Slider
+              value={[element.fontWeight || 400]}
+              onValueChange={val => handleValueChange('fontWeight', val[0])}
+              min={100}
+              max={900}
+              step={100}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Letter Spacing ({element.letterSpacing || 0}px)</Label>
+            <Slider
+              value={[element.letterSpacing || 0]}
+              onValueChange={val =>
+                handleValueChange('letterSpacing', val[0])
+              }
+              min={-5}
+              max={20}
+              step={1}
+            />
           </div>
         </>
       )}

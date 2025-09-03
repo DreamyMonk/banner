@@ -129,6 +129,7 @@ const DraggableElement = ({
             fontSize: `calc(${element.scale} / 100 * 4vw + 8px)`,
             fontWeight: element.fontWeight,
             fontFamily: element.fontFamily,
+            letterSpacing: `${element.letterSpacing || 0}px`,
           }}
         >
           {element.text}

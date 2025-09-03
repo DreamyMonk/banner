@@ -49,10 +49,13 @@ export async function generateImageForShop(
 
     } else if (element.type === 'text' && element.text) {
         const fontSize = (element.scale / 100) * 4 * (canvas.width / 100) + 8;
-        ctx.font = `${element.fontWeight || 700} ${fontSize}px "${element.fontFamily || 'Belleza'}", sans-serif`;
+        ctx.font = `${element.fontWeight || 400} ${fontSize}px "${element.fontFamily || 'Roboto'}", sans-serif`;
         ctx.fillStyle = element.color || '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        if (element.letterSpacing) {
+            ctx.letterSpacing = `${element.letterSpacing}px`;
+        }
         
         const text = element.text.replace('{{shopName}}', shop.name);
         ctx.fillText(text, 0, 0);

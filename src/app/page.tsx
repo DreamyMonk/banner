@@ -116,8 +116,9 @@ export default function Home() {
       ...(type === 'text' && {
         text: '{{shopName}}',
         color: '#ffffff',
-        fontWeight: 700,
-        fontFamily: 'Belleza',
+        fontWeight: 400,
+        fontFamily: 'Roboto',
+        letterSpacing: 0,
       }),
     };
     setElements(prev => [...prev, newElement]);
