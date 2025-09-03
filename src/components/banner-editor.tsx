@@ -167,7 +167,7 @@ const DraggableElement = ({
   );
 };
 
-const emailPlaceholders = ['{{shopName}}', '{{address}}', '{{phone}}'];
+const emailPlaceholders = ['{{shopName}}', '{{address}}', '{{phone}}', '{{email}}'];
 
 export function BannerEditor({
   bannerImage,

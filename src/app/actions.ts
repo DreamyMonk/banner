@@ -58,6 +58,7 @@ function generateEmailHTML(shop: Shop, emailBody: string): string {
     .replace(/{{shopName}}/g, shop.name)
     .replace(/{{address}}/g, shop.address || '')
     .replace(/{{phone}}/g, shop.phone || '')
+    .replace(/{{email}}/g, shop.email || '')
     .replace(/\n/g, '<br>');
 
   return `
@@ -132,7 +133,8 @@ export async function generateAndSendBanners(
         const personalizedSubject = emailSubject
             .replace(/{{shopName}}/g, shop.name)
             .replace(/{{address}}/g, shop.address || '')
-            .replace(/{{phone}}/g, shop.phone || '');
+            .replace(/{{phone}}/g, shop.phone || '')
+            .replace(/{{email}}/g, shop.email || '');
 
         await sendEmail(
           shop.email,
