@@ -1,6 +1,6 @@
 'use server';
 
-import { getFirestore, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, limit, orderBy, type Timestamp } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
@@ -22,9 +22,10 @@ export async function getBannerForPhone(phone: string): Promise<{ name: string; 
     const docData = querySnapshot.docs[0].data();
     
     // Check for expiration server-side as well
-    const createdAt = docData.createdAt.toDate();
+    const createdAtTimestamp = docData.createdAt as Timestamp;
+    const createdAtDate = createdAtTimestamp.toDate();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    if (createdAt < twentyFourHoursAgo) {
+    if (createdAtDate < twentyFourHoursAgo) {
         return { error: 'This download link has expired.' };
     }
 
