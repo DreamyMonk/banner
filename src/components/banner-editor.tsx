@@ -47,8 +47,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -443,10 +441,7 @@ export function BannerEditor({
               </TabsTrigger>
             </TabsList>
           </CardHeader>
-          <TabsContent
-            value="setup"
-            className="flex-1"
-          >
+          <TabsContent value="setup">
             <div className="px-6 pb-6 space-y-6">
               <div>
                 <h3 className="text-lg font-headline mb-2">Banner</h3>
@@ -487,10 +482,7 @@ export function BannerEditor({
               )}
             </div>
           </TabsContent>
-          <TabsContent
-            value="send"
-            className="flex-1 flex flex-col"
-          >
+          <TabsContent value="send">
             <div className="px-6 pb-6 space-y-6">
               <div>
                 <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
