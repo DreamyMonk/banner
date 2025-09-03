@@ -29,48 +29,6 @@ interface ShopWithBanner extends Shop {
   bannerDataUri: string;
 }
 
-async function sendEmail(
-  to: string,
-  from: string,
-  subject: string,
-  html: string,
-  attachments?: Attachment[]
-) {
-    if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
-        throw new Error('Mailjet API keys are not configured in environment variables.');
-    }
-    
-    const mailjet = new Mailjet({
-        apiKey: process.env.MAILJET_API_KEY,
-        apiSecret: process.env.MAILJET_SECRET_KEY,
-    });
-
-  console.log(`Sending email via Mailjet to: ${to}`);
-  const requestData = {
-    Messages: [
-      {
-        From: {
-          Email: from,
-          Name: 'Banners from Zedsu',
-        },
-        To: [
-          {
-            Email: to,
-          },
-        ],
-        Subject: subject,
-        HTMLPart: html,
-        ...(attachments && { Attachments: attachments }),
-      },
-    ],
-  };
-
-  const request = mailjet.post('send', { version: 'v3.1' }).request(requestData);
-
-  await request;
-  return { success: true };
-}
-
 function generateEmailHTML(
   shop: Shop,
   emailBody: string
@@ -134,6 +92,15 @@ export async function sendBannersByEmail(
   emailSubject: string,
   emailBody: string
 ) {
+   if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
+        throw new Error('Mailjet API keys are not configured in environment variables.');
+    }
+    
+    const mailjet = new Mailjet({
+        apiKey: process.env.MAILJET_API_KEY,
+        apiSecret: process.env.MAILJET_SECRET_KEY,
+    });
+
   const results = await Promise.all(
     shops.map(async shop => {
       try {
@@ -156,20 +123,33 @@ export async function sendBannersByEmail(
           Filename: 'banner.png',
           Base64Content: bannerBase64,
         };
+        
+        const requestData = {
+            Messages: [
+            {
+                From: {
+                Email: 'banner@zedsu.com',
+                Name: 'Banners from Zedsu',
+                },
+                To: [
+                {
+                    Email: shop.email,
+                },
+                ],
+                Subject: personalizedSubject,
+                HTMLPart: emailHtml,
+                Attachments: [bannerAttachment],
+            },
+            ],
+        };
 
-        await sendEmail(
-          shop.email,
-          'banner@zedsu.com',
-          personalizedSubject,
-          emailHtml,
-          [bannerAttachment]
-        );
+        await mailjet.post('send', { version: 'v3.1' }).request(requestData);
 
         return { success: true, shopName: shop.name };
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error(`Error for ${shop.name}:`, error);
+        console.error(`Error sending email to ${shop.name}:`, error);
         return { success: false, shopName: shop.name, error: errorMessage };
       }
     })
@@ -179,45 +159,54 @@ export async function sendBannersByEmail(
 }
 
 export async function shareBannersByLink(shops: ShopWithBanner[]) {
-  // First, delete any existing banners for the same phone numbers
-  const phones = shops.map(s => s.phone).filter(Boolean);
-  if (phones.length > 0) {
-    const q = query(collection(db, "sharedBanners"), where("phone", "in", phones));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        const batch = writeBatch(db);
-        querySnapshot.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        await batch.commit();
-        console.log(`Deleted ${querySnapshot.size} existing banners for updated shops.`);
-    }
-  }
-
-  const results = await Promise.all(
-    shops.map(async shop => {
-      try {
-        if (!shop.bannerDataUri || !shop.phone) {
-          throw new Error(`Banner or phone number for ${shop.name} is missing.`);
+  try {
+      // First, delete any existing banners for the same phone numbers
+    const phones = shops.map(s => s.phone).filter(Boolean);
+    if (phones.length > 0) {
+        const q = query(collection(db, "sharedBanners"), where("phone", "in", phones));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            const batch = writeBatch(db);
+            querySnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            console.log(`Deleted ${querySnapshot.size} existing banners for updated shops.`);
         }
-        
-        await addDoc(collection(db, 'sharedBanners'), {
-            shopName: shop.name,
-            phone: shop.phone,
-            bannerDataUri: shop.bannerDataUri,
-            createdAt: serverTimestamp(),
-        });
+    }
 
-        return { success: true, shopName: shop.name };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error(`Error sharing link for ${shop.name}:`, error);
-        return { success: false, shopName: shop.name, error: errorMessage };
-      }
-    })
-  );
-  return results;
+    const results = await Promise.all(
+        shops.map(async shop => {
+        try {
+            if (!shop.bannerDataUri || !shop.phone) {
+            throw new Error(`Banner or phone number for ${shop.name} is missing.`);
+            }
+            
+            await addDoc(collection(db, 'sharedBanners'), {
+                shopName: shop.name,
+                phone: shop.phone,
+                bannerDataUri: shop.bannerDataUri,
+                createdAt: serverTimestamp(),
+            });
+
+            return { success: true, shopName: shop.name };
+        } catch (error) {
+            const errorMessage =
+            error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error(`Error sharing link for ${shop.name}:`, error);
+            return { success: false, shopName: shop.name, error: errorMessage };
+        }
+        })
+    );
+    return results;
+  } catch (error) {
+      // This will catch top-level errors, like the permission denied error during the delete query
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error in shareBannersByLink:', error);
+      // Re-throw the error to be caught by the calling function in the component
+      throw new Error(errorMessage);
+  }
 }
 
 

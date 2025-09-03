@@ -52,6 +52,14 @@ export default function Home() {
             doc => ({ ...doc.data(), id: doc.id } as Shop)
           )
         );
+      },
+      error => {
+        console.error("Firestore 'shops' subscription error: ", error);
+        toast({
+            title: 'Database Error',
+            description: 'Could not load shops. Check Firestore permissions.',
+            variant: 'destructive'
+        });
       }
     );
 
@@ -63,6 +71,14 @@ export default function Home() {
             doc => ({ ...doc.data(), id: doc.id } as Group)
           )
         );
+      },
+       error => {
+        console.error("Firestore 'groups' subscription error: ", error);
+        toast({
+            title: 'Database Error',
+            description: 'Could not load groups. Check Firestore permissions.',
+            variant: 'destructive'
+        });
       }
     );
 
@@ -70,7 +86,7 @@ export default function Home() {
       unsubShops();
       unsubGroups();
     };
-  }, []);
+  }, [toast]);
 
   const [bannerImage, setBannerImage] = useState<string | null>(
     'https://picsum.photos/1200/630'
@@ -176,19 +192,36 @@ export default function Home() {
       return null;
     }
 
-    return Promise.all(
-      recipients.map(async shop => {
-        if (!shop.logo) {
-          throw new Error(`Logo missing for shop ${shop.name}`);
-        }
-        const generatedBannerUri = await generateImageForShop(
-          bannerImage,
-          elements,
-          shop
+    try {
+        const generatedBanners = await Promise.all(
+            recipients.map(async shop => {
+                if (!shop.logo) {
+                // Silently skip shops without logos for now, or you can throw an error
+                console.warn(`Logo missing for shop ${shop.name}, skipping banner generation.`);
+                return null;
+                }
+                const generatedBannerUri = await generateImageForShop(
+                bannerImage,
+                elements,
+                shop
+                );
+                return { ...shop, bannerDataUri: generatedBannerUri };
+            })
         );
-        return { ...shop, bannerDataUri: generatedBannerUri };
-      })
-    );
+        // Filter out any nulls from shops that were skipped
+        return generatedBanners.filter(Boolean) as (Shop & { bannerDataUri: string })[];
+    } catch (error) {
+        const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+        toast({
+            title: 'Image Generation Failed',
+            description: errorMessage,
+            variant: 'destructive',
+        });
+        console.error('Error during image generation:', error);
+        return null;
+    }
+
   };
 
   const handleSend = async () => {
@@ -211,8 +244,17 @@ export default function Home() {
 
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
-      if (!shopsWithBanners) {
+      if (!shopsWithBanners || shopsWithBanners.length === 0) {
         setIsSending(false);
+        if (!shopsWithBanners) {
+            // Error already toasted in generate function
+            return;
+        }
+        toast({
+            title: 'No Banners Generated',
+            description: 'Could not generate any banners. Check if shops have logos.',
+            variant: 'destructive'
+        });
         return;
       }
 
@@ -245,11 +287,11 @@ export default function Home() {
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';
       toast({
-        title: 'Generation Failed',
+        title: 'Sending Failed',
         description: errorMessage,
         variant: 'destructive',
       });
-      console.error('Error generating images:', error);
+      console.error('Error in handleSend:', error);
     } finally {
       setIsSending(false);
     }
@@ -274,8 +316,14 @@ export default function Home() {
 
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
-      if (!shopsWithBanners) {
+      if (!shopsWithBanners || shopsWithBanners.length === 0) {
         setIsSending(false);
+        if (!shopsWithBanners) return;
+         toast({
+            title: 'No Banners Generated',
+            description: 'Could not generate banners for sharing.',
+            variant: 'destructive'
+        });
         return;
       }
 
@@ -324,8 +372,14 @@ export default function Home() {
 
     try {
       const shopsWithBanners = await generateBannersForRecipients(recipients);
-      if (!shopsWithBanners) {
+       if (!shopsWithBanners || shopsWithBanners.length === 0) {
         setIsSending(false);
+        if (!shopsWithBanners) return;
+         toast({
+            title: 'No Banners Generated',
+            description: 'Could not generate any banners for download.',
+            variant: 'destructive'
+        });
         return;
       }
 
