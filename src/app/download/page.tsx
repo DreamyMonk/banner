@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getBannerForPhone } from './actions';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 
 const STORAGE_KEY = 'verifiedPhoneNumber';
 
@@ -23,15 +23,16 @@ export default function DownloadPage() {
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
 
   useEffect(() => {
+    // This effect runs once on component mount to check for a saved phone number.
     const savedPhone = localStorage.getItem(STORAGE_KEY);
     if (savedPhone) {
       setPhone(savedPhone);
-      handleVerify(savedPhone);
+      handleVerify(savedPhone); // Automatically try to verify if a number is saved
     } else {
       setIsLoading(false);
     }
     setHasCheckedStorage(true);
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once.
 
   const handleVerify = async (phoneToVerify: string) => {
     if (!phoneToVerify) return;
@@ -42,7 +43,7 @@ export default function DownloadPage() {
       if ('banner' in result) {
         setBannerData(result);
         setIsVerified(true);
-        localStorage.setItem(STORAGE_KEY, phoneToVerify);
+        localStorage.setItem(STORAGE_KEY, phoneToVerify); // Save the verified number
       } else {
         setError(result.error || 'Could not retrieve banner data.');
         setIsVerified(false);
@@ -114,6 +115,7 @@ export default function DownloadPage() {
                    <Image src={bannerData.banner} alt={`Banner for ${bannerData.name}`} layout="fill" objectFit="contain" />
                </div>
                <Button onClick={handleDownload} className="w-full" size="lg">
+                 <Download className="mr-2 h-4 w-4" />
                  Download Image
                </Button>
                <Button onClick={handleTryAnotherNumber} className="w-full" variant="outline">

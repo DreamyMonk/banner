@@ -183,11 +183,11 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
               return { success: false, shopName: shop.name, error: `Banner or phone number for ${shop.name} is missing.` };
             }
             
+            // Add the new banner without a timestamp.
             await addDoc(collection(db, 'sharedBanners'), {
                 shopName: shop.name,
                 phone: shop.phone,
                 bannerDataUri: shop.bannerDataUri,
-                createdAt: serverTimestamp(),
             });
 
             return { success: true, shopName: shop.name };
@@ -209,31 +209,9 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
 }
 
 export async function cleanupExpiredBanners() {
-  console.log('Running cleanup for expired banners...');
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  
-  const q = query(collection(db, "sharedBanners"), where("createdAt", "<", twentyFourHoursAgo));
-  
-  try {
-    const querySnapshot = await getDocs(q);
-    
-    if (querySnapshot.empty) {
-      console.log("No expired banners to delete.");
-      return { success: true, deletedCount: 0 };
-    }
-
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    await batch.commit();
-    
-    console.log(`Deleted ${querySnapshot.size} expired banners.`);
-    return { success: true, deletedCount: querySnapshot.size };
-  } catch (error) {
-    console.error("Error cleaning up expired banners:", error);
-    // Rethrow or handle as needed
-    throw error;
-  }
+  // This function can be kept for future maintenance if needed, but is not
+  // strictly necessary for the "latest link wins" logic.
+  // For now, it will do nothing to avoid conflicts.
+  console.log('Cleanup function is currently disabled.');
+  return { success: true, deletedCount: 0 };
 }
