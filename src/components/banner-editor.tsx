@@ -344,7 +344,7 @@ export function BannerEditor({
   const sensors = useSensor(PointerSensor);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-[calc(100vh-81px)]">
       <div
         className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
         ref={editorWrapperRef}
