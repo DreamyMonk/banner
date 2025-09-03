@@ -89,7 +89,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
   };
   
   const handleGroupChange = (value: string) => {
-    // 'none' is a special value to clear the group
     if (value === 'none') {
         setFormData(prev => ({ ...prev, groups: [] }));
     } else {
@@ -149,7 +148,6 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
     setIsEditing(null);
     setFormData(initialShopState);
     setLogoPreview(null);
-    // This is to reset the file input visually
     const fileInput = document.getElementById('logo') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -330,5 +328,3 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
     </Sheet>
   );
 }
-
-    
