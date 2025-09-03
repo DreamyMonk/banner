@@ -47,6 +47,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import JSZip from 'jszip';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -138,7 +139,10 @@ const DraggableElement = ({
         </div>
       )}
       {element.type === 'text' && (
-        <span className="whitespace-nowrap pointer-events-none" style={textStyle}>
+        <span
+          className="whitespace-nowrap pointer-events-none"
+          style={textStyle}
+        >
           {element.text}
         </span>
       )}
@@ -162,6 +166,8 @@ const DraggableElement = ({
     </div>
   );
 };
+
+const emailPlaceholders = ['{{shopName}}', '{{address}}', '{{phone}}'];
 
 export function BannerEditor({
   bannerImage,
@@ -187,7 +193,10 @@ export function BannerEditor({
 }: BannerEditorProps) {
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [bannerDimensions, setBannerDimensions] = useState({ width: 1200, height: 630 });
+  const [bannerDimensions, setBannerDimensions] = useState({
+    width: 1200,
+    height: 630,
+  });
   const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
@@ -212,7 +221,6 @@ export function BannerEditor({
       setZoom(Math.max(0.1, newZoom));
     }
   }, [bannerDimensions]);
-
 
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
@@ -240,7 +248,8 @@ export function BannerEditor({
     const element = elements.find(el => el.id === active.id);
     if (!element || !containerRef.current) return;
 
-    const { width: containerWidth, height: containerHeight } = containerRef.current.getBoundingClientRect();
+    const { width: containerWidth, height: containerHeight } =
+      containerRef.current.getBoundingClientRect();
 
     const newX = element.x + (delta.x / containerWidth) * 100;
     const newY = element.y + (delta.y / containerHeight) * 100;
@@ -293,19 +302,31 @@ export function BannerEditor({
 
       if (interaction.type === 'rotate') {
         const angle =
-          Math.atan2(e.clientY - interaction.centerY, e.clientX - interaction.centerX) *
+          Math.atan2(
+            e.clientY - interaction.centerY,
+            e.clientX - interaction.centerX
+          ) *
           (180 / Math.PI);
-        updateElement(interaction.elementId, { rotation: Math.round(angle + 90) });
+        updateElement(interaction.elementId, {
+          rotation: Math.round(angle + 90),
+        });
       }
 
       if (interaction.type === 'resize') {
         const dx = e.clientX - interaction.startX;
         const dy = e.clientY - interaction.startY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const direction = e.clientX > interaction.startX || e.clientY > interaction.startY ? 1 : -1;
-        
-        const newScale = interaction.startScale + (distance / bannerDimensions.width) * 100 * direction;
-        updateElement(interaction.elementId, { scale: Math.max(1, Math.min(200, newScale)) });
+        const direction =
+          e.clientX > interaction.startX || e.clientY > interaction.startY
+            ? 1
+            : -1;
+
+        const newScale =
+          interaction.startScale +
+          (distance / bannerDimensions.width) * 100 * direction;
+        updateElement(interaction.elementId, {
+          scale: Math.max(1, Math.min(200, newScale)),
+        });
       }
     },
     [updateElement, bannerDimensions.width]
@@ -321,7 +342,10 @@ export function BannerEditor({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
-      <div className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative" ref={editorWrapperRef}>
+      <div
+        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative"
+        ref={editorWrapperRef}
+      >
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
           <div
             id="banner-container"
@@ -367,10 +391,24 @@ export function BannerEditor({
             ))}
           </div>
         </DndContext>
-         <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
-            <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}><ZoomOut /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setZoom(1)}><Maximize /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.min(3, z + 0.1))}><ZoomIn /></Button>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card p-1 rounded-lg shadow-md">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setZoom(z => Math.max(0.1, z - 0.1))}
+          >
+            <ZoomOut />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setZoom(1)}>
+            <Maximize />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+          >
+            <ZoomIn />
+          </Button>
         </div>
       </div>
 
@@ -456,7 +494,7 @@ export function BannerEditor({
                   Email Subject
                 </h3>
                 <Input
-                  placeholder="Enter your email subject. Use {{shopName}} as a placeholder."
+                  placeholder="Enter your email subject..."
                   value={emailSubject}
                   onChange={e => setEmailSubject(e.target.value)}
                 />
@@ -467,11 +505,23 @@ export function BannerEditor({
                   Email Body
                 </h3>
                 <Textarea
-                  placeholder="Enter your email content here. Use {{shopName}} as a placeholder."
+                  placeholder="Enter your email content here..."
                   className="flex-1"
                   value={emailBody}
                   onChange={e => setEmailBody(e.target.value)}
                 />
+              </div>
+              <div>
+                <div className="flex flex-wrap gap-1 pt-1">
+                  <span className="text-xs text-muted-foreground mr-1">
+                    Available placeholders:
+                  </span>
+                  {emailPlaceholders.map(p => (
+                    <Badge variant="secondary" key={p} className="cursor-default">
+                      {p}
+                    </Badge>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-4">
                 <Button
