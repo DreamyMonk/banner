@@ -161,6 +161,8 @@ export async function updateShop(shop: Shop) {
     email: shop.email,
     logo: shop.logo,
     groups: shop.groups,
+    address: shop.address,
+    phone: shop.phone,
   });
 }
 

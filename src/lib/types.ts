@@ -3,6 +3,8 @@ export interface Shop {
   name: string;
   email: string;
   logo: string; // Data URI
+  address: string;
+  phone: string;
   groups: string[]; // Array of group IDs
 }
 

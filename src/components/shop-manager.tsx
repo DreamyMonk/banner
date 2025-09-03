@@ -58,6 +58,8 @@ const initialShopState: Omit<Shop, 'id'> = {
   email: '',
   logo: '',
   groups: [],
+  address: '',
+  phone: '',
 };
 
 export function ShopManager({ shops, groups }: ShopManagerProps) {
@@ -75,6 +77,8 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
         email: isEditing.email,
         logo: isEditing.logo,
         groups: isEditing.groups || [],
+        address: isEditing.address || '',
+        phone: isEditing.phone || '',
       });
       setLogoPreview(isEditing.logo);
     } else {
@@ -201,6 +205,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Groups</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -210,6 +215,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                     <TableRow key={shop.id}>
                       <TableCell className="font-medium">{shop.name}</TableCell>
                       <TableCell>{shop.email}</TableCell>
+                      <TableCell>{shop.phone}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {shop.groups && shop.groups.map(groupId => (
@@ -257,6 +263,14 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="email">Email</Label>
                   <Input id="email" type="email" value={formData.email} onChange={handleInputChange} />
+                </div>
+                 <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" value={formData.phone} onChange={handleInputChange} />
+                </div>
+                 <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="address">Address</Label>
+                  <Input id="address" value={formData.address} onChange={handleInputChange} />
                 </div>
                 <div className="grid w-full items-center gap-1.5">
                   <Label htmlFor="logo">Logo</Label>

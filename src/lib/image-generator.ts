@@ -56,7 +56,11 @@ export async function generateImageForShop(
         
         const letterSpacing = element.letterSpacing || 0;
         
-        const text = element.text.replace('{{shopName}}', shop.name);
+        const text = element.text
+          .replace(/{{shopName}}/g, shop.name)
+          .replace(/{{address}}/g, shop.address || '')
+          .replace(/{{phone}}/g, shop.phone || '');
+
 
         if (letterSpacing !== 0) {
             const chars = text.split('');

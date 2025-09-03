@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const googleFonts = [
   'Roboto',
@@ -24,6 +25,8 @@ const googleFonts = [
   'Belleza',
   'Alegreya',
 ];
+
+const placeholders = ['{{shopName}}', '{{address}}', '{{phone}}'];
 
 interface ElementInspectorProps {
   element: BannerElement;
@@ -54,6 +57,12 @@ export function ElementInspector({
               value={element.text}
               onChange={e => handleValueChange('text', e.target.value)}
             />
+             <div className="flex flex-wrap gap-1 pt-1">
+                <span className="text-xs text-muted-foreground mr-1">Available placeholders:</span>
+                {placeholders.map(p => (
+                    <Badge variant="secondary" key={p} className="cursor-default">{p}</Badge>
+                ))}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="font-family">Font</Label>
