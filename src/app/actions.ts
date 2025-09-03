@@ -1,6 +1,6 @@
 'use server';
 
-import type { BannerElement, Shop } from '@/lib/types';
+import type { Shop } from '@/lib/types';
 import Mailjet from 'node-mailjet';
 
 const db = getFirestore(app);
@@ -16,6 +16,10 @@ interface Attachment {
   ContentType: string;
   Filename: string;
   Base64Content: string;
+}
+
+interface ShopWithBanner extends Shop {
+    bannerDataUri: string;
 }
 
 async function sendEmail(
@@ -49,52 +53,19 @@ async function sendEmail(
   return { success: true };
 }
 
-function generateBannerHTML(shop: Shop, elements: BannerElement[]): string {
-  const elementHTML = elements
-    .map(element => {
-      const style: React.CSSProperties = {
-        position: 'absolute',
-        left: `${element.x}%`,
-        top: `${element.y}%`,
-        transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
-        opacity: element.opacity / 100,
-        aspectRatio: element.type === 'logo' ? '1 / 1' : undefined,
-      };
-
-      if (element.type === 'logo') {
-        return `<div style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;width:${element.scale}%;"><img src="${shop.logo}" alt="Shop Logo" style="width:100%;height:auto;object-fit:contain;" /></div>`;
-      }
-
-      if (element.type === 'text') {
-        const fontSize = `calc(${element.scale} / 100 * 4vw + 8px)`;
-        return `<span style="left:${style.left};top:${style.top};transform:${style.transform};opacity:${style.opacity};position:absolute;color:${element.color};font-weight:${element.fontWeight};font-size:${fontSize};font-family:Belleza, sans-serif;white-space:nowrap;text-shadow:1px 1px 3px rgba(0,0,0,0.5);">${element.text?.replace('{{shopName}}', shop.name)}</span>`;
-      }
-      return '';
-    })
-    .join('');
-
-  return `
-      <div style="position: relative; width: 1200px; height: 630px; overflow: hidden;">
-        <img src="cid:banner.png" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;" />
-        ${elementHTML}
-      </div>
-    `;
-}
-
 function generateEmailHTML(
-  shop: Shop,
-  bannerHTML: string,
+  shopName: string,
   emailBody: string
 ): string {
   const personalizedBody = emailBody
-    .replace(/{{shopName}}/g, shop.name)
+    .replace(/{{shopName}}/g, shopName)
     .replace(/\n/g, '<br>');
 
   return `
       <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px;">
         <p>${personalizedBody}</p>
         <br>
-        ${bannerHTML}
+        <img src="cid:banner.png" alt="Personalized Banner" style="width: 100%; max-width: 600px; height: auto;" />
         <br>
         <p style="font-size: 12px; color: #888;">Powered by Banners from Zedsu</p>
       </div>
@@ -102,33 +73,26 @@ function generateEmailHTML(
 }
 
 export async function generateAndSendBanners(
-  shops: Shop[],
-  bannerDataUri: string,
-  elements: BannerElement[],
+  shops: ShopWithBanner[],
   emailSubject: string,
   emailBody: string
 ) {
   const results = await Promise.all(
     shops.map(async shop => {
       try {
-        if (!bannerDataUri) {
-          throw new Error('Banner image is missing.');
-        }
-        if (!shop.logo) {
-          throw new Error(`Logo for ${shop.name} is missing.`);
+        if (!shop.bannerDataUri) {
+          throw new Error(`Banner for ${shop.name} is missing.`);
         }
         
-        const bannerHtml = generateBannerHTML(shop, elements);
-        const emailHtml = generateEmailHTML(shop, bannerHtml, emailBody);
+        const emailHtml = generateEmailHTML(shop.name, emailBody);
 
-        const bannerMimeType = bannerDataUri.split(';')[0].split(':')[1];
-        const bannerBase64 = bannerDataUri.split(',')[1];
+        const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
+        const bannerBase64 = shop.bannerDataUri.split(',')[1];
         const bannerAttachment: Attachment = {
             ContentType: bannerMimeType,
             Filename: 'banner.png',
             Base64Content: bannerBase64,
         };
-
 
         await sendEmail(
           shop.email,
@@ -142,7 +106,7 @@ export async function generateAndSendBanners(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error(`Mailjet error for ${shop.name}:`, error);
+        console.error(`Error for ${shop.name}:`, error);
         return { success: false, shopName: shop.name, error: errorMessage };
       }
     })

@@ -32,6 +32,7 @@ import {
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
+import { generateImageForShop } from '@/lib/image-generator';
 
 const db = getFirestore(app);
 
@@ -184,39 +185,62 @@ export default function Home() {
     setIsSending(true);
 
     toast({
-      title: 'Sending Banners...',
-      description: `Sending to ${recipients.length} shops.`,
+      title: 'Generating & Sending Banners...',
+      description: `Processing ${recipients.length} shops. This may take a moment.`,
     });
 
-    const results = await generateAndSendBanners(
-      recipients,
-      bannerImage,
-      elements,
-      emailSubject,
-      emailBody
-    );
+    try {
+      const shopsWithBanners = await Promise.all(
+        recipients.map(async shop => {
+          if (!shop.logo) {
+            throw new Error(`Logo missing for shop ${shop.name}`);
+          }
+          const generatedBannerUri = await generateImageForShop(
+            bannerImage,
+            elements,
+            shop
+          );
+          return { ...shop, bannerDataUri: generatedBannerUri };
+        })
+      );
 
-    let successCount = 0;
-    let errorCount = 0;
+      const results = await generateAndSendBanners(
+        shopsWithBanners,
+        emailSubject,
+        emailBody
+      );
 
-    results.forEach(result => {
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        console.error(`Failed for ${result.shopName}: ${result.error}`);
-      }
-    });
+      let successCount = 0;
+      let errorCount = 0;
 
-    toast({
-      title: 'Sending Complete',
-      description: `Sent ${successCount} banners successfully. ${
-        errorCount > 0 ? `${errorCount} failed.` : ''
-      }`,
-      variant: errorCount > 0 ? 'destructive' : 'default',
-    });
+      results.forEach(result => {
+        if (result.success) {
+          successCount++;
+        } else {
+          errorCount++;
+          console.error(`Failed for ${result.shopName}: ${result.error}`);
+        }
+      });
 
-    setIsSending(false);
+      toast({
+        title: 'Sending Complete',
+        description: `Sent ${successCount} banners successfully. ${
+          errorCount > 0 ? `${errorCount} failed.` : ''
+        }`,
+        variant: errorCount > 0 ? 'destructive' : 'default',
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({
+        title: 'Generation Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+      console.error('Error generating images:', error);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
