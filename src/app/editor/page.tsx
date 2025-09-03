@@ -459,13 +459,15 @@ export default function EditorPage() {
   };
 
   return (
-    <ClientOnly>
-      <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background">
+      <ClientOnly>
         <Header 
           onClearBanner={clearBanner} 
           onDeleteBanner={() => setIsDeleteAlertOpen(true)} 
         />
-        <main className="flex-1 overflow-hidden">
+      </ClientOnly>
+      <main className="flex-1 overflow-hidden">
+        <ClientOnly>
           <BannerEditor
             bannerImage={bannerImage}
             handleBannerImageUpload={handleBannerImageUpload}
@@ -489,8 +491,8 @@ export default function EditorPage() {
             emailBody={emailBody}
             setEmailBody={setEmailBody}
           />
-        </main>
-      </div>
+        </ClientOnly>
+      </main>
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -508,6 +510,6 @@ export default function EditorPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ClientOnly>
+    </div>
   );
 }
