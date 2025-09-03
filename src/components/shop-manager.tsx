@@ -96,7 +96,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
 
   const handleEdit = (shop: Shop) => {
     setIsEditing(shop);
-    setNewShop({ name: shop.name, email: shop.email, logo: shop.logo, groups: shop.groups });
+    setNewShop({ name: shop.name, email: shop.email, logo: shop.logo, groups: shop.groups || [] });
     setLogoPreview(shop.logo);
   };
   
@@ -169,7 +169,7 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                       <TableCell>{shop.email}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {shop.groups.map(groupId => (
+                          {shop.groups && shop.groups.map(groupId => (
                             <Badge key={groupId} variant="secondary">
                               {groups.find(g => g.id === groupId)?.name}
                             </Badge>
@@ -222,7 +222,10 @@ export function ShopManager({ shops, groups }: ShopManagerProps) {
                 </div>
                 <div className="grid w-full items-center gap-1.5">
                   <Label>Groups</Label>
-                  <Select value={newShop.groups[0]} onValueChange={val => setNewShop({ ...newShop, groups: val ? [val] : [] })}>
+                  <Select
+                    value={newShop.groups.length > 0 ? newShop.groups[0] : ''}
+                    onValueChange={val => setNewShop({ ...newShop, groups: val ? [val] : [] })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Assign to a group" />
                     </SelectTrigger>

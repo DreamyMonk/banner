@@ -20,7 +20,7 @@ export function RecipientsPanel({ groups, shops, selectedGroups, setSelectedGrou
   const recipientCount =
     selectedGroups.length === 0
       ? shops.length
-      : shops.filter(shop => shop.groups.some(groupId => selectedGroups.includes(groupId))).length;
+      : shops.filter(shop => shop.groups && shop.groups.some(groupId => selectedGroups.includes(groupId))).length;
 
   return (
     <div className="space-y-4">
@@ -36,7 +36,7 @@ export function RecipientsPanel({ groups, shops, selectedGroups, setSelectedGrou
                         {group.name}
                     </Label>
                     <span className='text-sm text-muted-foreground'>
-                        ({shops.filter(s => s.groups.includes(group.id)).length} shops)
+                        ({shops.filter(s => s.groups && s.groups.includes(group.id)).length} shops)
                     </span>
                 </div>
             )) : (

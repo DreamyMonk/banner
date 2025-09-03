@@ -26,7 +26,7 @@ async function sendEmail(
   return { success: true };
 }
 
-function generateHTML(shop: Shop, bannerImage: string, elements: BannerElement[]): string {
+function generateBannerHTML(shop: Shop, bannerImage: string, elements: BannerElement[]): string {
     const elementHTML = elements.map(element => {
       const style: React.CSSProperties = {
           position: 'absolute',
@@ -56,11 +56,28 @@ function generateHTML(shop: Shop, bannerImage: string, elements: BannerElement[]
     `;
 }
 
+function generateEmailHTML(shop: Shop, bannerHTML: string, emailBody: string): string {
+    const personalizedBody = emailBody
+      .replace(/{{shopName}}/g, shop.name)
+      .replace(/\n/g, '<br>');
+
+    return `
+      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+        <p>${personalizedBody}</p>
+        <br>
+        ${bannerHTML}
+        <br>
+        <p style="font-size: 12px; color: #888;">Powered by BannerBee</p>
+      </div>
+    `;
+}
+
 
 export async function generateAndSendBanners(
   shops: Shop[],
   bannerDataUri: string,
-  elements: BannerElement[]
+  elements: BannerElement[],
+  emailBody: string
 ) {
   const results = await Promise.all(
     shops.map(async shop => {
@@ -72,7 +89,8 @@ export async function generateAndSendBanners(
           throw new Error(`Logo for ${shop.name} is missing.`);
         }
 
-        const emailHtml = generateHTML(shop, bannerDataUri, elements);
+        const bannerHtml = generateBannerHTML(shop, bannerDataUri, elements);
+        const emailHtml = generateEmailHTML(shop, bannerHtml, emailBody);
 
         await sendEmail(
           shop.email,

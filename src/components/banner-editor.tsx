@@ -19,6 +19,7 @@ import {
   Settings2,
   RotateCw,
   Expand,
+  Mail,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
@@ -45,6 +46,8 @@ interface BannerEditorProps {
   isSending: boolean;
   handleSend: () => void;
   handleLayerDragEnd: (event: DragEndEvent) => void;
+  emailBody: string;
+  setEmailBody: Dispatch<SetStateAction<string>>;
 }
 
 const DraggableElement = ({
@@ -151,6 +154,8 @@ export function BannerEditor({
   isSending,
   handleSend,
   handleLayerDragEnd,
+  emailBody,
+  setEmailBody,
 }: BannerEditorProps) {
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -233,7 +238,7 @@ export function BannerEditor({
         const dx = e.clientX - interaction.startX;
         const dy = e.clientY - interaction.startY;
         const distance = Math.sqrt(dx*dx + dy*dy);
-        const direction = (e.clientX > interaction.startX) ? 1 : -1;
+        const direction = (e.clientX > interaction.startX || e.clientY > interaction.startY) ? 1 : -1;
 
         const newScale = interaction.startScale + (distance / containerRef.current.getBoundingClientRect().width) * 100 * direction;
         updateElement(interaction.elementId, { scale: Math.max(5, Math.min(200, newScale)) });
@@ -364,20 +369,25 @@ export function BannerEditor({
                   setSelectedGroups={setSelectedGroups}
                 />
               </div>
-              <div className='flex-1 flex flex-col'>
-                <h3 className="text-lg font-headline mb-2">Email Preview</h3>
-                <div
-                  className="flex-1 bg-muted/50 font-mono text-xs p-2 rounded-md overflow-auto text-center"
-                >
-                  <p>An email with the final banner will be sent.</p>
-                  <p className='text-xs text-muted-foreground mt-1'>You must install the 'Trigger Email' Firebase Extension.</p>
-                </div>
+              <div className='flex-1 flex flex-col min-h-0'>
+                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                    <Mail />Email Body
+                </h3>
+                <Textarea
+                    placeholder="Enter your email content here. Use {{shopName}} as a placeholder."
+                    className="flex-1"
+                    value={emailBody}
+                    onChange={(e) => setEmailBody(e.target.value)}
+                />
+                <p className='text-xs text-muted-foreground mt-1'>
+                    You must install the 'Trigger Email' Firebase Extension for this to work.
+                </p>
               </div>
               <Button
                 size="lg"
                 onClick={handleSend}
                 disabled={isSending}
-                className="w-full"
+                className="w-full mt-4"
               >
                 {isSending ? (
                   <>

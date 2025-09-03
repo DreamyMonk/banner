@@ -77,6 +77,10 @@ export default function Home() {
   );
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [emailBody, setEmailBody] = useState(
+    'Hi {{shopName}},\n\nHere is your personalized banner!'
+  );
+
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -157,8 +161,10 @@ export default function Home() {
     const recipients =
       selectedGroups.length === 0
         ? shops
-        : shops.filter(shop =>
-            shop.groups.some(groupId => selectedGroups.includes(groupId))
+        : shops.filter(
+            shop =>
+              shop.groups &&
+              shop.groups.some(groupId => selectedGroups.includes(groupId))
           );
 
     if (recipients.length === 0) {
@@ -181,7 +187,8 @@ export default function Home() {
     const results = await generateAndSendBanners(
       recipients,
       bannerImage,
-      elements
+      elements,
+      emailBody
     );
 
     let successCount = 0;
@@ -230,6 +237,8 @@ export default function Home() {
           isSending={isSending}
           handleSend={handleSend}
           handleLayerDragEnd={handleLayerDragEnd}
+          emailBody={emailBody}
+          setEmailBody={setEmailBody}
         />
       </main>
     </div>
