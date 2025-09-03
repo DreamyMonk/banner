@@ -25,8 +25,8 @@ export default function LoginPage() {
     const result = await login(password);
 
     if (result.success) {
-      router.push('/');
-      router.refresh(); // Important to re-fetch server components and session
+      router.push('/editor'); // Important to re-fetch server components and session
+      router.refresh(); 
     } else {
       setError(result.error || 'Login failed.');
       toast({
