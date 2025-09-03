@@ -1,38 +1,29 @@
 'use server';
 
-import { getFirestore, collection, query, where, getDocs, limit, orderBy, type Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
 
 export async function getBannerForPhone(phone: string): Promise<{ name: string; banner: string } | { error: string }> {
   try {
+    // Find the most recent banner for the given phone number.
     const q = query(
         collection(db, 'sharedBanners'), 
         where('phone', '==', phone),
-        orderBy('createdAt', 'desc'),
+        orderBy('createdAt', 'desc'), // Keep ordering to get the latest one if duplicates somehow exist
         limit(1)
     );
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return { error: 'No banner found for this phone number, or the link has expired.' };
+      return { error: 'No banner found for this phone number, or a new link has been generated.' };
     }
 
     const docData = querySnapshot.docs[0].data();
     
-    // Check for expiration server-side as well
-    const createdAtTimestamp = docData.createdAt as Timestamp;
-    if (!createdAtTimestamp) {
-        return { error: 'Banner data is incomplete, missing creation date.' };
-    }
-    const createdAtDate = createdAtTimestamp.toDate();
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    if (createdAtDate < twentyFourHoursAgo) {
-        return { error: 'This download link has expired.' };
-    }
-
+    // The logic is now "latest link wins", so no timestamp check is needed here.
+    // The cleanup is handled by a separate cron job.
     return {
         name: docData.shopName,
         banner: docData.bannerDataUri,
