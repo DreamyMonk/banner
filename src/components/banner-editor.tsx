@@ -25,7 +25,7 @@ import { ElementInspector } from './element-inspector';
 import { LayersPanel } from './layers-panel';
 import { RecipientsPanel } from './recipients-panel';
 import type { ChangeEvent, Dispatch, SetStateAction, MouseEvent as ReactMouseEvent } from 'react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { DndContext, useDraggable, useSensor, PointerSensor, type DragEndEvent } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -158,7 +158,12 @@ export function BannerEditor({
   const [interaction, setInteraction] = useState<{
     type: 'rotate' | 'resize' | null;
     elementId: string | null;
-  }>({ type: null, elementId: null });
+    startX: number;
+    startY: number;
+    startRotation: number;
+    startScale: number;
+  }>({ type: null, elementId: null, startX: 0, startY: 0, startRotation: 0, startScale: 0 });
+
 
   const handleElementDragEnd = ({ delta, active }: DragEndEvent) => {
     const element = elements.find(el => el.id === active.id);
@@ -181,10 +186,22 @@ export function BannerEditor({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    setInteraction({ type, elementId });
+    if (!containerRef.current) return;
+
+    const element = elements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    setInteraction({ 
+      type, 
+      elementId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startRotation: element.rotation,
+      startScale: element.scale,
+    });
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!interaction.type || !interaction.elementId || !containerRef.current) return;
     
     const element = elements.find(el => el.id === interaction.elementId);
@@ -193,7 +210,7 @@ export function BannerEditor({
     const containerRect = containerRef.current.getBoundingClientRect();
     const elementNode = containerRef.current.querySelector(`[data-kit-node="draggable"][id="${element.id}"]`) as HTMLElement;
     if (!elementNode) return;
-
+    
     const elemRect = elementNode.getBoundingClientRect();
     const centerX = elemRect.left + elemRect.width / 2;
     const centerY = elemRect.top + elemRect.height / 2;
@@ -204,31 +221,28 @@ export function BannerEditor({
     }
 
     if (interaction.type === 'resize') {
-        const dx = e.clientX - centerX;
-        const dy = e.clientY - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // This is a simplified scale calculation.
-        // A more robust solution might compare to the element's original dimensions.
-        const originalDiagonal = Math.sqrt(Math.pow(elemRect.width, 2) + Math.pow(elemRect.height, 2));
-        const newScale = (distance * 2 / originalDiagonal) * element.scale;
-
-        updateElement(element.id, { scale: Math.max(1, Math.min(200, newScale)) });
+        const dx = e.clientX - interaction.startX;
+        // Simple scaling based on horizontal mouse movement.
+        // This is a more stable approach than distance calculation.
+        const newScale = interaction.startScale + (dx / containerRect.width) * 100;
+        updateElement(element.id, { scale: Math.max(5, Math.min(200, newScale)) });
     }
-  };
+  }, [interaction, elements, updateElement]);
 
-  const handleMouseUp = () => {
-    setInteraction({ type: null, elementId: null });
-  };
+  const handleMouseUp = useCallback(() => {
+    setInteraction({ type: null, elementId: null, startX: 0, startY: 0, startRotation: 0, startScale: 0 });
+  }, []);
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    if (interaction.type) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [interaction, elements]);
+  }, [interaction.type, handleMouseMove, handleMouseUp]);
 
 
   const sensors = useSensor(PointerSensor);
