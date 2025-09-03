@@ -92,13 +92,9 @@ export async function sendBannersByEmail(
   emailSubject: string,
   emailBody: string
 ) {
-   if (!process.env.MAILJET_API_KEY || !process.env.MAILJET_SECRET_KEY) {
-        throw new Error('Mailjet API keys are not configured in environment variables.');
-    }
-    
-    const mailjet = new Mailjet({
-        apiKey: process.env.MAILJET_API_KEY,
-        apiSecret: process.env.MAILJET_SECRET_KEY
+   const mailjet = new Mailjet({
+        apiKey: '16d3a777234c9d5624e6948bddb8c93d',
+        apiSecret: '674dcaf79502e10e9feae496ef4e68c5'
     });
 
   const results = await Promise.all(

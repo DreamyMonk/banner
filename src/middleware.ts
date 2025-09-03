@@ -2,11 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getSession } from './lib/auth';
 
+const CRON_SECRET = 'a-very-secret-cron-key-for-development';
+
 export async function middleware(request: NextRequest) {
   const isApiCron = request.nextUrl.pathname.startsWith('/api/cron');
   if (isApiCron) {
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
     return NextResponse.next();
