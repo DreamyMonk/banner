@@ -27,6 +27,7 @@ interface Attachment {
 
 interface ShopWithBanner extends Shop {
   bannerDataUri: string;
+  bannerFileName: string;
 }
 
 function generateEmailHTML(
@@ -118,9 +119,10 @@ export async function sendBannersByEmail(
 
         const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
         const bannerBase64 = shop.bannerDataUri.split(',')[1];
+        const fileName = `${shop.bannerFileName}_${shop.name.replace(/ /g, '_')}.png`;
         const bannerAttachment: Attachment = {
           ContentType: bannerMimeType,
-          Filename: 'banner.png',
+          Filename: fileName,
           Base64Content: bannerBase64,
         };
         
@@ -188,6 +190,7 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
                 shopName: shop.name,
                 phone: shop.phone,
                 bannerDataUri: shop.bannerDataUri,
+                bannerFileName: shop.bannerFileName,
             });
 
             return { success: true, shopName: shop.name };

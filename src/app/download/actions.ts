@@ -5,7 +5,7 @@ import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
 
-export async function getBannerForPhone(phone: string): Promise<{ name: string; banner: string } | { error: string }> {
+export async function getBannerForPhone(phone: string): Promise<{ name: string; banner: string; bannerFileName: string } | { error: string }> {
   try {
     // Simple lookup: Find a banner for the given phone number.
     // The "latest link wins" logic is handled in the `shareBannersByLink` action,
@@ -26,6 +26,7 @@ export async function getBannerForPhone(phone: string): Promise<{ name: string; 
     return {
         name: docData.shopName,
         banner: docData.bannerDataUri,
+        bannerFileName: docData.bannerFileName || 'banner',
     };
 
   } catch (error) {

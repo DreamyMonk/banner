@@ -12,12 +12,18 @@ import { Loader2, Download } from 'lucide-react';
 
 const STORAGE_KEY = 'verifiedPhoneNumber';
 
+type BannerData = { 
+  name: string; 
+  banner: string;
+  bannerFileName: string;
+};
+
 export default function DownloadPage() {
   const { toast } = useToast();
 
   const [phone, setPhone] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [bannerData, setBannerData] = useState<{ name: string; banner: string } | null>(null);
+  const [bannerData, setBannerData] = useState<BannerData | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Start loading to check storage
   const [error, setError] = useState<string | null>(null);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
@@ -76,7 +82,7 @@ export default function DownloadPage() {
     if (bannerData) {
         const link = document.createElement('a');
         link.href = bannerData.banner;
-        link.download = `${bannerData.name.replace(/ /g, '_')}_banner.png`;
+        link.download = `${bannerData.bannerFileName}_${bannerData.name.replace(/ /g, '_')}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

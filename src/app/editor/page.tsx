@@ -51,6 +51,7 @@ export default function EditorPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [bannerFileName, setBannerFileName] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubShops = onSnapshot(
@@ -123,6 +124,7 @@ export default function EditorPage() {
   const handleBannerImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setBannerFileName(file.name.replace(/\.[^/.]+$/, '')); // Store filename without extension
       const reader = new FileReader();
       reader.onloadend = () => {
         setBannerImage(reader.result as string);
@@ -135,6 +137,7 @@ export default function EditorPage() {
     setBannerImage(null);
     setElements([]);
     setSelectedElementId(null);
+    setBannerFileName(null);
   }
 
   const handleDeleteSharedBanners = async () => {
@@ -262,10 +265,10 @@ export default function EditorPage() {
                 elements,
                 shop
                 );
-                return { ...shop, bannerDataUri: generatedBannerUri };
+                return { ...shop, bannerDataUri: generatedBannerUri, bannerFileName: bannerFileName || 'banner' };
             })
         );
-        return generatedBanners.filter(Boolean) as (Shop & { bannerDataUri: string })[];
+        return generatedBanners.filter(Boolean) as (Shop & { bannerDataUri: string; bannerFileName: string })[];
     } catch (error) {
         const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';
@@ -427,7 +430,8 @@ export default function EditorPage() {
       const zip = new JSZip();
       shopsWithBanners.forEach(shop => {
         const base64Data = shop.bannerDataUri.split(',')[1];
-        zip.file(`${shop.name.replace(/ /g, '_')}_banner.png`, base64Data, {
+        const fileName = `${shop.bannerFileName}_${shop.name.replace(/ /g, '_')}.png`;
+        zip.file(fileName, base64Data, {
           base64: true,
         });
       });
@@ -435,7 +439,7 @@ export default function EditorPage() {
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(zipBlob);
-      link.download = 'banners.zip';
+      link.download = `${bannerFileName || 'banners'}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
