@@ -72,7 +72,7 @@ const DraggableElement = ({
   isSelected,
   onSelect,
   onStartInteraction,
-  containerWidth
+  containerHeight
 }: {
   element: BannerElement;
   isSelected: boolean;
@@ -82,7 +82,7 @@ const DraggableElement = ({
     type: 'rotate' | 'resize',
     id: string
   ) => void;
-  containerWidth: number;
+  containerHeight: number;
 }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: element.id,
@@ -102,7 +102,7 @@ const DraggableElement = ({
   
   const textStyle = {
     color: element.color,
-    fontSize: `${(element.scale / 100) * 4 * (containerWidth / 100) + 8}px`,
+    fontSize: `${(element.scale / 100) * (containerHeight / 15)}px`,
     fontWeight: element.fontWeight,
     fontFamily: element.fontFamily,
     letterSpacing: `${element.letterSpacing || 0}px`,
@@ -185,7 +185,7 @@ export function BannerEditor({
   setEmailBody,
 }: BannerEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
   const interactionRef = useRef<{
     type: 'rotate' | 'resize' | null;
     elementId: string | null;
@@ -211,7 +211,7 @@ export function BannerEditor({
   useEffect(() => {
     const resizeObserver = new ResizeObserver(entries => {
         if (entries[0]) {
-            setContainerWidth(entries[0].contentRect.width);
+            setContainerHeight(entries[0].contentRect.height);
         }
     });
 
@@ -371,7 +371,7 @@ export function BannerEditor({
                 onSelect={setSelectedElementId}
                 onStartInteraction={handleInteractionStart}
                 isSelected={selectedElement?.id === element.id}
-                containerWidth={containerWidth}
+                containerHeight={containerHeight}
               />
             ))}
           </div>

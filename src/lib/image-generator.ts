@@ -48,7 +48,7 @@ export async function generateImageForShop(
         ctx.drawImage(logoImage, -width / 2, -height / 2, width, height);
 
     } else if (element.type === 'text' && element.text) {
-        const fontSize = (element.scale / 100) * 4 * (canvas.width / 100) + 8;
+        const fontSize = (element.scale / 100) * (canvas.height / 15);
         ctx.font = `${element.fontWeight || 400} ${fontSize}px "${element.fontFamily || 'Roboto'}", sans-serif`;
         ctx.fillStyle = element.color || '#ffffff';
         ctx.textAlign = 'center';
