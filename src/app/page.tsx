@@ -117,6 +117,7 @@ export default function Home() {
         text: '{{shopName}}',
         color: '#ffffff',
         fontWeight: 700,
+        fontFamily: 'Belleza',
       }),
     };
     setElements(prev => [...prev, newElement]);

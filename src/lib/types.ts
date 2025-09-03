@@ -22,4 +22,5 @@ export type BannerElement = {
   text?: string;
   color?: string;
   fontWeight?: number;
+  fontFamily?: string;
 };

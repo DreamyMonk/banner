@@ -49,7 +49,7 @@ export async function generateImageForShop(
 
     } else if (element.type === 'text' && element.text) {
         const fontSize = (element.scale / 100) * 4 * (canvas.width / 100) + 8;
-        ctx.font = `${element.fontWeight || 700} ${fontSize}px Belleza, sans-serif`;
+        ctx.font = `${element.fontWeight || 700} ${fontSize}px "${element.fontFamily || 'Belleza'}", sans-serif`;
         ctx.fillStyle = element.color || '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
