@@ -208,6 +208,36 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
   }
 }
 
+export async function deleteSharedBanners(shops: Shop[]) {
+  const phones = shops.map(s => s.phone).filter(Boolean) as string[];
+  if (phones.length === 0) {
+    return { success: true, deletedCount: 0 };
+  }
+
+  try {
+    const q = query(collection(db, 'sharedBanners'), where('phone', 'in', phones));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return { success: true, deletedCount: 0 };
+    }
+
+    const batch = writeBatch(db);
+    querySnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+
+    return { success: true, deletedCount: querySnapshot.size };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Error deleting shared banners:', error);
+    return { success: false, error: errorMessage };
+  }
+}
+
+
 export async function cleanupExpiredBanners() {
   // This function can be kept for future maintenance if needed, but is not
   // strictly necessary for the "latest link wins" logic.

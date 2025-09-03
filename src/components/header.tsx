@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users, LogOut, Trash2 } from 'lucide-react';
+import { Users, LogOut, Trash, Trash2 } from 'lucide-react';
 import { logout } from '@/app/login/actions';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -27,23 +27,27 @@ const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 interface HeaderProps {
   onClearBanner: () => void;
+  onDeleteBanner: () => void;
 }
 
-export function Header({ onClearBanner }: HeaderProps) {
+export function Header({ onClearBanner, onDeleteBanner }: HeaderProps) {
   return (
     <header className="flex items-center justify-between p-4 border-b bg-card">
       <div className="flex items-center gap-2">
         <BeeIcon className="w-8 h-8 text-primary" />
         <h1 className="text-2xl font-headline text-foreground">BannerBee</h1>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Button asChild>
           <Link href="/shops">
             <Users className="mr-2" /> Manage Shops
           </Link>
         </Button>
-         <Button variant="destructive" onClick={onClearBanner}>
-          <Trash2 className="mr-2" /> Clear Banner
+         <Button variant="outline" onClick={onClearBanner}>
+          <Trash className="mr-2" /> Clear Editor
+        </Button>
+        <Button variant="destructive" onClick={onDeleteBanner}>
+            <Trash2 className="mr-2" /> Delete Shared Banners
         </Button>
         <form action={logout}>
             <Button variant="outline" type="submit">
