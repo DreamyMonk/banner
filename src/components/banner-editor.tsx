@@ -20,6 +20,7 @@ import {
   RotateCw,
   Expand,
   Mail,
+  FileSignature,
 } from 'lucide-react';
 import type { BannerElement, Group, Shop } from '@/lib/types';
 import { ElementInspector } from './element-inspector';
@@ -57,6 +58,8 @@ interface BannerEditorProps {
   isSending: boolean;
   handleSend: () => void;
   handleLayerDragEnd: (event: DragEndEvent) => void;
+  emailSubject: string;
+  setEmailSubject: Dispatch<SetStateAction<string>>;
   emailBody: string;
   setEmailBody: Dispatch<SetStateAction<string>>;
 }
@@ -167,6 +170,8 @@ export function BannerEditor({
   isSending,
   handleSend,
   handleLayerDragEnd,
+  emailSubject,
+  setEmailSubject,
   emailBody,
   setEmailBody,
 }: BannerEditorProps) {
@@ -414,6 +419,17 @@ export function BannerEditor({
                   shops={shops}
                   selectedGroups={selectedGroups}
                   setSelectedGroups={setSelectedGroups}
+                />
+              </div>
+               <div className="space-y-2">
+                <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
+                  <FileSignature />
+                  Email Subject
+                </h3>
+                <Input
+                  placeholder="Enter your email subject. Use {{shopName}} as a placeholder."
+                  value={emailSubject}
+                  onChange={e => setEmailSubject(e.target.value)}
                 />
               </div>
               <div className="flex-1 flex flex-col min-h-0">

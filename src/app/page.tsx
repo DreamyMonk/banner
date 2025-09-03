@@ -78,6 +78,9 @@ export default function Home() {
   );
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [emailSubject, setEmailSubject] = useState(
+    'Your Personalized Banner is Here!'
+  );
   const [emailBody, setEmailBody] = useState(
     'Hi {{shopName}},\n\nHere is your personalized banner!'
   );
@@ -189,6 +192,7 @@ export default function Home() {
       recipients,
       bannerImage,
       elements,
+      emailSubject,
       emailBody
     );
 
@@ -239,6 +243,8 @@ export default function Home() {
           isSending={isSending}
           handleSend={handleSend}
           handleLayerDragEnd={handleLayerDragEnd}
+          emailSubject={emailSubject}
+          setEmailSubject={setEmailSubject}
           emailBody={emailBody}
           setEmailBody={setEmailBody}
         />

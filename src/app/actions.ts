@@ -1,22 +1,29 @@
 'use server';
 
-import { app } from '@/lib/firebase';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import type { BannerElement, Shop } from '@/lib/types';
 import Mailjet from 'node-mailjet';
 
 const db = getFirestore(app);
+import { app } from '@/lib/firebase';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 
 const mailjet = new Mailjet({
   apiKey: process.env.MAILJET_API_KEY,
   apiSecret: process.env.MAILJET_SECRET_KEY,
 });
 
+interface Attachment {
+  ContentType: string;
+  Filename: string;
+  Base64Content: string;
+}
+
 async function sendEmail(
   to: string,
   from: string,
   subject: string,
-  html: string
+  html: string,
+  attachments: Attachment[]
 ) {
   console.log(`Sending email via Mailjet to: ${to}`);
   const request = mailjet.post('send', { version: 'v3.1' }).request({
@@ -24,7 +31,7 @@ async function sendEmail(
       {
         From: {
           Email: from,
-          Name: 'BannerBee',
+          Name: 'Banners from Zedsu',
         },
         To: [
           {
@@ -33,6 +40,7 @@ async function sendEmail(
         ],
         Subject: subject,
         HTMLPart: html,
+        Attachments: attachments,
       },
     ],
   });
@@ -41,11 +49,7 @@ async function sendEmail(
   return { success: true };
 }
 
-function generateBannerHTML(
-  shop: Shop,
-  bannerImage: string,
-  elements: BannerElement[]
-): string {
+function generateBannerHTML(shop: Shop, elements: BannerElement[]): string {
   const elementHTML = elements
     .map(element => {
       const style: React.CSSProperties = {
@@ -71,7 +75,7 @@ function generateBannerHTML(
 
   return `
       <div style="position: relative; width: 1200px; height: 630px; overflow: hidden;">
-        <img src="${bannerImage}" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;" />
+        <img src="cid:banner.png" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;" />
         ${elementHTML}
       </div>
     `;
@@ -92,7 +96,7 @@ function generateEmailHTML(
         <br>
         ${bannerHTML}
         <br>
-        <p style="font-size: 12px; color: #888;">Powered by BannerBee</p>
+        <p style="font-size: 12px; color: #888;">Powered by Banners from Zedsu</p>
       </div>
     `;
 }
@@ -101,6 +105,7 @@ export async function generateAndSendBanners(
   shops: Shop[],
   bannerDataUri: string,
   elements: BannerElement[],
+  emailSubject: string,
   emailBody: string
 ) {
   const results = await Promise.all(
@@ -112,15 +117,25 @@ export async function generateAndSendBanners(
         if (!shop.logo) {
           throw new Error(`Logo for ${shop.name} is missing.`);
         }
-
-        const bannerHtml = generateBannerHTML(shop, bannerDataUri, elements);
+        
+        const bannerHtml = generateBannerHTML(shop, elements);
         const emailHtml = generateEmailHTML(shop, bannerHtml, emailBody);
+
+        const bannerMimeType = bannerDataUri.split(';')[0].split(':')[1];
+        const bannerBase64 = bannerDataUri.split(',')[1];
+        const bannerAttachment: Attachment = {
+            ContentType: bannerMimeType,
+            Filename: 'banner.png',
+            Base64Content: bannerBase64,
+        };
+
 
         await sendEmail(
           shop.email,
           'banner@zedsu.com',
-          'Your Personalized Banner is Here!',
-          emailHtml
+          emailSubject.replace('{{shopName}}', shop.name),
+          emailHtml,
+          [bannerAttachment]
         );
 
         return { success: true, shopName: shop.name };
