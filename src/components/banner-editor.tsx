@@ -556,7 +556,7 @@ export function BannerEditor({
                     </>
                   ) : (
                     <>
-                      <Share2 className="mr-2" /> Send Download Link
+                      <Share2 className="mr-2" /> Push to Download
                     </>
                   )}
                 </Button>
