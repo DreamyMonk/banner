@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { sendBannersByEmail, shareBannersByLink } from './actions';
+import { sendBannersByEmail, shareBannersByLink } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Header } from '@/components/header';
 import { BannerEditor } from '@/components/banner-editor';
@@ -36,7 +36,7 @@ import { generateImageForShop } from '@/lib/image-generator';
 
 const db = getFirestore(app);
 
-export default function Home() {
+export default function EditorPage() {
   const { toast } = useToast();
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -119,6 +119,12 @@ export default function Home() {
       reader.readAsDataURL(file);
     }
   };
+
+  const clearBanner = () => {
+    setBannerImage(null);
+    setElements([]);
+    setSelectedElementId(null);
+  }
 
   const addElement = (type: 'logo' | 'text') => {
     const newElement: BannerElement = {
@@ -401,7 +407,7 @@ export default function Home() {
   return (
     <ClientOnly>
       <div className="flex flex-col h-screen bg-background">
-        <Header />
+        <Header onClearBanner={clearBanner} />
         <main className="flex-1 overflow-hidden">
           <BannerEditor
             bannerImage={bannerImage}

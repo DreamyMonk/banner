@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users, LogOut } from 'lucide-react';
+import { Users, LogOut, Trash2 } from 'lucide-react';
 import { logout } from '@/app/login/actions';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -25,7 +25,11 @@ const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export function Header() {
+interface HeaderProps {
+  onClearBanner: () => void;
+}
+
+export function Header({ onClearBanner }: HeaderProps) {
   return (
     <header className="flex items-center justify-between p-4 border-b bg-card">
       <div className="flex items-center gap-2">
@@ -37,6 +41,9 @@ export function Header() {
           <Link href="/shops">
             <Users className="mr-2" /> Manage Shops
           </Link>
+        </Button>
+         <Button variant="destructive" onClick={onClearBanner}>
+          <Trash2 className="mr-2" /> Clear Banner
         </Button>
         <form action={logout}>
             <Button variant="outline" type="submit">
