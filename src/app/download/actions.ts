@@ -1,19 +1,23 @@
 'use server';
 
-import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, limit, Timestamp } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
 
-export async function getBannerForPhone(phone: string): Promise<{ name: string; banner: string; bannerFileName: string } | { error: string }> {
+type BannerResult = { 
+  name: string; 
+  banner: string; 
+  bannerFileName: string; 
+} | { error: string };
+
+
+export async function getBannerForPhone(phone: string): Promise<BannerResult> {
   try {
-    // Simple lookup: Find a banner for the given phone number.
-    // The "latest link wins" logic is handled in the `shareBannersByLink` action,
-    // so we don't need complex queries here.
     const q = query(
         collection(db, 'sharedBanners'), 
         where('phone', '==', phone),
-        limit(1) // In theory, there should only ever be one. This is a safeguard.
+        limit(1)
     );
     const querySnapshot = await getDocs(q);
 
@@ -23,6 +27,23 @@ export async function getBannerForPhone(phone: string): Promise<{ name: string; 
 
     const docData = querySnapshot.docs[0].data();
     
+    // Check for suspension
+    if (docData.status === 'suspended') {
+        return { error: 'Account Suspended. Please contact support.' };
+    }
+
+    // Check for expiration
+    const createdAt = (docData.createdAt as Timestamp)?.toDate();
+    const duration = docData.duration; // in days
+
+    if (createdAt && typeof duration === 'number') {
+        const expirationDate = new Date(createdAt);
+        expirationDate.setDate(expirationDate.getDate() + duration);
+        if (new Date() > expirationDate) {
+            return { error: 'Plan Expired. Contact Support.' };
+        }
+    }
+
     return {
         name: docData.shopName,
         banner: docData.bannerDataUri,

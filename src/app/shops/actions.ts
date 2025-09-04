@@ -18,14 +18,10 @@ export async function addShop(shop: Omit<Shop, 'id'>) {
 }
 
 export async function updateShop(shop: Shop) {
-  await updateDoc(doc(db, 'shops', shop.id), {
-    name: shop.name,
-    email: shop.email,
-    logo: shop.logo,
-    groups: shop.groups,
-    address: shop.address,
-    phone: shop.phone,
-  });
+  const shopRef = doc(db, 'shops', shop.id);
+  // Create a plain object without the 'id' property for updating
+  const { id, ...shopData } = shop;
+  await updateDoc(shopRef, shopData);
 }
 
 export async function deleteShop(shopId: string) {

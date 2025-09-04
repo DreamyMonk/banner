@@ -6,6 +6,8 @@ export interface Shop {
   address: string;
   phone: string;
   groups: string[]; // Array of group IDs
+  status: 'active' | 'suspended';
+  duration?: number | null; // Subscription duration in days
 }
 
 export interface Group {

@@ -185,12 +185,14 @@ export async function shareBannersByLink(shops: ShopWithBanner[]) {
               return { success: false, shopName: shop.name, error: `Banner or phone number for ${shop.name} is missing.` };
             }
             
-            // Add the new banner without a timestamp.
             await addDoc(collection(db, 'sharedBanners'), {
                 shopName: shop.name,
                 phone: shop.phone,
                 bannerDataUri: shop.bannerDataUri,
                 bannerFileName: shop.bannerFileName,
+                createdAt: serverTimestamp(),
+                duration: shop.duration || null,
+                status: shop.status,
             });
 
             return { success: true, shopName: shop.name };

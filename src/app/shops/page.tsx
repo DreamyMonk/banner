@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, type ChangeEvent } from 'react';
@@ -9,16 +8,14 @@ import {
   getFirestore,
   QuerySnapshot,
   DocumentData,
+  query,
+  where,
+  getDocs,
+  Timestamp,
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import {
-  addShop,
-  updateShop,
-  deleteShop,
-  addGroup,
-  deleteGroup,
-} from './actions';
+import { addShop, updateShop, deleteShop, addGroup, deleteGroup } from './actions';
 import type { Shop, Group } from '@/lib/types';
 
 import {
@@ -52,8 +49,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Users, Plus, Trash2, Edit, X, ArrowLeft, Search } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Trash2,
+  Edit,
+  X,
+  ArrowLeft,
+  Search,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Ban,
+  PlayCircle,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const initialShopState: Omit<Shop, 'id'> = {
   name: '',
@@ -62,7 +73,11 @@ const initialShopState: Omit<Shop, 'id'> = {
   groups: [],
   address: '',
   phone: '',
+  status: 'active',
+  duration: null,
 };
+
+type FilterStatus = 'all' | 'active' | 'suspended' | 'expired';
 
 export default function ShopsPage() {
   const { toast } = useToast();
@@ -73,17 +88,60 @@ export default function ShopsPage() {
   const [newGroup, setNewGroup] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState<FilterStatus>('all');
+  const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore(app);
+
+    const fetchExpiredShops = async () => {
+      const q = query(collection(db, 'sharedBanners'));
+      const querySnapshot = await getDocs(q);
+      const now = new Date();
+      const expiredIds = new Set<string>();
+
+      const shopPhoneMap = new Map<string, string>();
+      shops.forEach(s => {
+        if (s.phone) shopPhoneMap.set(s.phone, s.id)
+      });
+      
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        const createdAt = (data.createdAt as Timestamp)?.toDate();
+        const duration = data.duration;
+        const phone = data.phone;
+
+        if (createdAt && typeof duration === 'number' && phone) {
+          const expirationDate = new Date(createdAt);
+          expirationDate.setDate(expirationDate.getDate() + duration);
+          if (now > expirationDate) {
+            const shopId = shopPhoneMap.get(phone);
+            if(shopId) expiredIds.add(shopId);
+          }
+        }
+      });
+      setExpiredShopIds(expiredIds);
+    };
+
+
     const unsubShops = onSnapshot(
       collection(db, 'shops'),
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        setShops(
-          snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Shop))
+      async (snapshot: QuerySnapshot<DocumentData>) => {
+        const shopList = snapshot.docs.map(
+          doc => ({ ...doc.data(), id: doc.id } as Shop)
         );
+        setShops(shopList);
+        await fetchExpiredShops(); // Re-check expirations when shops change
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Firestore error:", error);
+        toast({ title: 'Error', description: 'Could not load shops.', variant: 'destructive' });
+        setIsLoading(false);
       }
     );
+
     const unsubGroups = onSnapshot(
       collection(db, 'groups'),
       (snapshot: QuerySnapshot<DocumentData>) => {
@@ -92,11 +150,12 @@ export default function ShopsPage() {
         );
       }
     );
+    
     return () => {
       unsubShops();
       unsubGroups();
     };
-  }, []);
+  }, [shops, toast]);
 
   useEffect(() => {
     if (isEditing) {
@@ -107,6 +166,8 @@ export default function ShopsPage() {
         groups: isEditing.groups || [],
         address: isEditing.address || '',
         phone: isEditing.phone || '',
+        status: isEditing.status || 'active',
+        duration: isEditing.duration || null,
       });
       setLogoPreview(isEditing.logo);
     } else {
@@ -116,17 +177,24 @@ export default function ShopsPage() {
   }, [isEditing]);
 
   const filteredShops = useMemo(() => {
-    if (!searchTerm) return shops;
-    return shops.filter(shop =>
-      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (shop.phone && shop.phone.includes(searchTerm))
-    );
-  }, [shops, searchTerm]);
+    return shops
+      .filter(shop => {
+        if (filter === 'all') return true;
+        if (filter === 'active') return shop.status === 'active' && !expiredShopIds.has(shop.id);
+        if (filter === 'suspended') return shop.status === 'suspended';
+        if (filter === 'expired') return expiredShopIds.has(shop.id);
+        return true;
+      })
+      .filter(shop =>
+        shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shop.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (shop.phone && shop.phone.includes(searchTerm))
+      );
+  }, [shops, searchTerm, filter, expiredShopIds]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    const { id, value, type } = e.target;
+    setFormData(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
   };
 
   const handleGroupChange = (value: string) => {
@@ -154,7 +222,7 @@ export default function ShopsPage() {
     if (!formData.name || !formData.email || !formData.logo) {
       toast({
         title: 'Missing Information',
-        description: 'Please fill out all fields.',
+        description: 'Please fill out name, email and logo.',
         variant: 'destructive',
       });
       return;
@@ -208,12 +276,6 @@ export default function ShopsPage() {
 
   const resetForm = () => {
     setIsEditing(null);
-    setFormData(initialShopState);
-    setLogoPreview(null);
-    const fileInput = document.getElementById('logo') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
   };
 
   const handleAddGroup = async () => {
@@ -246,6 +308,24 @@ export default function ShopsPage() {
     }
   };
 
+  const toggleSuspend = async (shop: Shop) => {
+    const newStatus = shop.status === 'suspended' ? 'active' : 'suspended';
+    try {
+        await updateShop({ ...shop, status: newStatus });
+        toast({
+            title: `Shop ${newStatus === 'suspended' ? 'Suspended' : 'Activated'}`,
+            description: `${shop.name} has been ${newStatus === 'suspended' ? 'suspended' : 'activated'}.`
+        });
+    } catch (error) {
+        console.error('Failed to toggle suspension:', error);
+        toast({
+            title: 'Error',
+            description: 'Could not update shop status.',
+            variant: 'destructive'
+        });
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <header className="flex items-center justify-between mb-6">
@@ -268,15 +348,23 @@ export default function ShopsPage() {
              <CardDescription>
                 A list of all shops. You can search by name, email, or phone.
             </CardDescription>
-            <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search shops..."
-                    className="w-full pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+             <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search shops..."
+                        className="w-full pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="flex items-center gap-2 border p-1 rounded-md">
+                    <Button variant={filter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('all')}>All</Button>
+                    <Button variant={filter === 'active' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('active')}><CheckCircle className="mr-2 h-4 w-4 text-green-500" />Active</Button>
+                    <Button variant={filter === 'suspended' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('suspended')}><XCircle className="mr-2 h-4 w-4 text-red-500" />Suspended</Button>
+                    <Button variant={filter === 'expired' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('expired')}><Clock className="mr-2 h-4 w-4 text-orange-500" />Expired</Button>
+                </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -286,62 +374,85 @@ export default function ShopsPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Groups</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredShops.map(shop => (
-                    <TableRow key={shop.id}>
-                      <TableCell className="font-medium">{shop.name}</TableCell>
-                      <TableCell>{shop.email}</TableCell>
-                      <TableCell>{shop.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {shop.groups &&
-                            shop.groups.map(groupId => (
-                              <Badge key={groupId} variant="secondary">
-                                {groups.find(g => g.id === groupId)?.name}
-                              </Badge>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(shop)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete {shop.name} and
-                                cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(shop.id)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center">Loading shops...</TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredShops.map(shop => {
+                    const isExpired = expiredShopIds.has(shop.id);
+                    return (
+                        <TableRow key={shop.id}>
+                        <TableCell className="font-medium">{shop.name}</TableCell>
+                        <TableCell>{shop.email}</TableCell>
+                        <TableCell>
+                            {isExpired ? (
+                                <Badge variant="destructive"><Clock className="mr-1" />Expired</Badge>
+                            ) : shop.status === 'active' ? (
+                                <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle className="mr-1" />Active</Badge>
+                            ) : (
+                                <Badge variant="destructive"><XCircle className="mr-1" />Suspended</Badge>
+                            )}
+                        </TableCell>
+                        <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                            {shop.groups &&
+                                shop.groups.map(groupId => (
+                                <Badge key={groupId} variant="secondary">
+                                    {groups.find(g => g.id === groupId)?.name}
+                                </Badge>
+                                ))}
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => toggleSuspend(shop)}
+                                title={shop.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+                            >
+                                {shop.status === 'suspended' ? <PlayCircle className="h-4 w-4 text-green-500" /> : <Ban className="h-4 w-4 text-orange-500" />}
+                            </Button>
+                            <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(shop)}
+                            >
+                            <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete {shop.name} and
+                                    cannot be undone.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={() => handleDelete(shop.id)}
+                                >
+                                    Delete
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                        </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -384,6 +495,16 @@ export default function ShopsPage() {
                 <Input
                   id="address"
                   value={formData.address ?? ''}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid w-full items-center gap-1.5">
+                <Label htmlFor="duration">Duration (days)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  placeholder="Leave empty for infinite"
+                  value={formData.duration ?? ''}
                   onChange={handleInputChange}
                 />
               </div>
@@ -493,5 +614,3 @@ export default function ShopsPage() {
     </div>
   );
 }
-
-    
