@@ -29,6 +29,10 @@ import {
   getFirestore,
   QuerySnapshot,
   DocumentData,
+  query,
+  where,
+  getDocs,
+  Timestamp,
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
@@ -52,16 +56,46 @@ export default function EditorPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [bannerFileName, setBannerFileName] = useState<string | null>(null);
+  const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const fetchExpiredShops = async (allShops: Shop[]) => {
+        const q = query(collection(db, 'sharedBanners'));
+        const querySnapshot = await getDocs(q);
+        const now = new Date();
+        const expiredIds = new Set<string>();
+
+        const shopPhoneMap = new Map<string, string>();
+        allShops.forEach(s => {
+            if (s.phone) shopPhoneMap.set(s.phone, s.id);
+        });
+        
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const createdAt = (data.createdAt as Timestamp)?.toDate();
+            const duration = data.duration;
+            const phone = data.phone;
+
+            if (createdAt && typeof duration === 'number' && phone) {
+                const expirationDate = new Date(createdAt);
+                expirationDate.setDate(expirationDate.getDate() + duration);
+                if (now > expirationDate) {
+                    const shopId = shopPhoneMap.get(phone);
+                    if(shopId) expiredIds.add(shopId);
+                }
+            }
+        });
+        setExpiredShopIds(expiredIds);
+    };
+
     const unsubShops = onSnapshot(
       collection(db, 'shops'),
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        setShops(
-          snapshot.docs.map(
+      async (snapshot: QuerySnapshot<DocumentData>) => {
+        const shopList = snapshot.docs.map(
             doc => ({ ...doc.data(), id: doc.id } as Shop)
-          )
-        );
+          );
+        setShops(shopList);
+        await fetchExpiredShops(shopList);
       },
       error => {
         console.error("Firestore 'shops' subscription error: ", error);
@@ -255,13 +289,16 @@ export default function EditorPage() {
   }
 
   const getRecipients = () => {
-    return selectedGroups.length === 0
+    const allRecipients = selectedGroups.length === 0
       ? shops
       : shops.filter(
           shop =>
             shop.groups &&
             shop.groups.some(groupId => selectedGroups.includes(groupId))
         );
+    
+    // Filter out suspended and expired shops
+    return allRecipients.filter(shop => shop.status === 'active' && !expiredShopIds.has(shop.id));
   };
 
   const generateBannersForRecipients = async (recipients: Shop[]) => {
@@ -308,9 +345,9 @@ export default function EditorPage() {
     const recipients = getRecipients();
     if (recipients.length === 0) {
       toast({
-        title: 'No Recipients',
+        title: 'No Active Recipients',
         description:
-          'Please select at least one group with shops or add shops.',
+          'There are no active shops in the selected groups to send banners to.',
         variant: 'destructive',
       });
       return;
@@ -368,8 +405,8 @@ export default function EditorPage() {
     const recipients = getRecipients();
     if (recipients.length === 0) {
       toast({
-        title: 'No Recipients',
-        description: 'Please select recipients to share with.',
+        title: 'No Active Recipients',
+        description: 'There are no active shops in the selected groups to share banners with.',
         variant: 'destructive',
       });
       return;
@@ -423,8 +460,8 @@ export default function EditorPage() {
     const recipients = getRecipients();
     if (recipients.length === 0) {
       toast({
-        title: 'No Recipients',
-        description: 'No shops to generate banners for.',
+        title: 'No Active Recipients',
+        description: 'No active shops to generate banners for.',
         variant: 'destructive',
       });
       return;

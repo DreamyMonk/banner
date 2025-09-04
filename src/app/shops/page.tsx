@@ -95,14 +95,14 @@ export default function ShopsPage() {
   useEffect(() => {
     const db = getFirestore(app);
 
-    const fetchExpiredShops = async () => {
+    const fetchExpiredShops = async (allShops: Shop[]) => {
       const q = query(collection(db, 'sharedBanners'));
       const querySnapshot = await getDocs(q);
       const now = new Date();
       const expiredIds = new Set<string>();
 
       const shopPhoneMap = new Map<string, string>();
-      shops.forEach(s => {
+      allShops.forEach(s => {
         if (s.phone) shopPhoneMap.set(s.phone, s.id)
       });
       
@@ -132,7 +132,7 @@ export default function ShopsPage() {
           doc => ({ ...doc.data(), id: doc.id } as Shop)
         );
         setShops(shopList);
-        await fetchExpiredShops(); // Re-check expirations when shops change
+        await fetchExpiredShops(shopList); // Re-check expirations when shops change
         setIsLoading(false);
       },
       (error) => {
@@ -155,7 +155,7 @@ export default function ShopsPage() {
       unsubShops();
       unsubGroups();
     };
-  }, [shops, toast]);
+  }, [toast]);
 
   useEffect(() => {
     if (isEditing) {
