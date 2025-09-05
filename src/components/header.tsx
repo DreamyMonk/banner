@@ -43,6 +43,9 @@ export function Header({ onClearBanner, onDeleteBanner }: HeaderProps) {
             <Users className="mr-2" /> Manage Shops
           </Link>
         </Button>
+        <Button asChild>
+          <Link href="/published">Published Banners</Link>
+        </Button>
          <Button variant="outline" onClick={onClearBanner}>
           <Trash className="mr-2" /> Clear Editor
         </Button>

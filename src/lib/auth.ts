@@ -1,8 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
 
-const secretKey = 'fallback-secret-key-for-development-only';
+const secretKey = process.env.JWT_SECRET || 'fallback-secret-key-for-development-only';
 const key = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: any) {
@@ -46,20 +45,3 @@ export async function getSession() {
   return await decrypt(sessionCookie);
 }
 
-export async function updateSession(request: NextRequest) {
-    const sessionCookie = request.cookies.get('session')?.value;
-    if (!sessionCookie) return;
-
-    const parsed = await decrypt(sessionCookie);
-    if (!parsed) return;
-    
-    parsed.expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const res = NextResponse.next();
-    res.cookies.set({
-        name: 'session',
-        value: await encrypt(parsed),
-        httpOnly: true,
-        expires: parsed.expires,
-    });
-    return res;
-}
