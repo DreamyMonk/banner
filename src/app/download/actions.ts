@@ -23,27 +23,51 @@ export async function getBannersForPhone(phone: string): Promise<BannerResult> {
     }
 
     const banners: BannerData[] = [];
-    querySnapshot.forEach(docSnap => {
-      const docData = docSnap.data();
 
+    querySnapshot.forEach(docSnap => {
+      const docData = docSnap.data() as Record<string, any>;
+
+      // skip suspended
       if (docData.status === 'suspended') {
         return;
       }
 
-      const createdAt = (docData.createdAt as Timestamp)?.toDate();
+      // handle createdAt in multiple possible shapes (Timestamp, Date, number)
+      let createdAtDate: Date | null = null;
+      const createdAtRaw = docData.createdAt;
+      if (createdAtRaw instanceof Timestamp) {
+        createdAtDate = createdAtRaw.toDate();
+      } else if (createdAtRaw instanceof Date) {
+        createdAtDate = createdAtRaw;
+      } else if (typeof createdAtRaw === 'number') {
+        // unix ms or seconds? assume milliseconds; if seconds, this will result in a far past date
+        createdAtDate = new Date(createdAtRaw);
+      }
+
       const duration = docData.duration;
-      if (createdAt && typeof duration === 'number') {
-        const expirationDate = new Date(createdAt);
+      if (createdAtDate && typeof duration === 'number') {
+        const expirationDate = new Date(createdAtDate);
         expirationDate.setDate(expirationDate.getDate() + duration);
         if (new Date() > expirationDate) {
+          // expired
           return;
         }
       }
 
+      // map to BannerData (guard against missing fields)
+      const name = typeof docData.shopName === 'string' ? docData.shopName : '';
+      const banner = typeof docData.bannerDataUri === 'string' ? docData.bannerDataUri : '';
+      const bannerFileName = typeof docData.bannerFileName === 'string' && docData.bannerFileName.length > 0
+        ? docData.bannerFileName
+        : 'banner';
+
+      // if there's no banner data, skip
+      if (!banner) return;
+
       banners.push({
-        name: docData.shopName as string,
-        banner: docData.bannerDataUri as string,
-        bannerFileName: (docData.bannerFileName as string) || 'banner',
+        name,
+        banner,
+        bannerFileName,
       });
     });
 
