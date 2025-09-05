@@ -7,9 +7,6 @@ import {
   getFirestore,
   collection,
   addDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
   serverTimestamp,
   query,
   where,
@@ -160,56 +157,59 @@ export async function sendBannersByEmail(
   return results;
 }
 
-export async function shareBannersByLink(shops: ShopWithBanner[]) {
+export async function shareBannersByLink(
+  baseBanner: string,
+  shops: ShopWithBanner[]
+) {
   try {
-      // First, delete any existing banners for the same phone numbers
-    const phones = shops.map(s => s.phone).filter(Boolean);
-    if (phones.length > 0) {
-        const q = query(collection(db, "sharedBanners"), where("phone", "in", phones));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const batch = writeBatch(db);
-            querySnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            await batch.commit();
-            console.log(`Deleted ${querySnapshot.size} existing banners for updated shops.`);
-        }
-    }
+    // Store base banner information
+    const baseBannerDoc = await addDoc(collection(db, 'publishedBanners'), {
+      baseBannerDataUri: baseBanner,
+      createdAt: serverTimestamp(),
+    });
+
+    const baseBannerId = baseBannerDoc.id;
 
     const results = await Promise.all(
-        shops.map(async shop => {
+      shops.map(async shop => {
         try {
-            if (!shop.bannerDataUri || !shop.phone) {
-              console.warn(`Skipping link generation for ${shop.name} due to missing banner or phone.`);
-              return { success: false, shopName: shop.name, error: `Banner or phone number for ${shop.name} is missing.` };
-            }
-            
-            await addDoc(collection(db, 'sharedBanners'), {
-                shopName: shop.name,
-                phone: shop.phone,
-                bannerDataUri: shop.bannerDataUri,
-                bannerFileName: shop.bannerFileName,
-                createdAt: serverTimestamp(),
-                duration: shop.duration || null,
-                status: shop.status,
-            });
+          if (!shop.bannerDataUri || !shop.phone) {
+            console.warn(
+              `Skipping link generation for ${shop.name} due to missing banner or phone.`
+            );
+            return {
+              success: false,
+              shopName: shop.name,
+              error: `Banner or phone number for ${shop.name} is missing.`,
+            };
+          }
 
-            return { success: true, shopName: shop.name };
+          await addDoc(collection(db, 'sharedBanners'), {
+            shopName: shop.name,
+            phone: shop.phone,
+            bannerDataUri: shop.bannerDataUri,
+            bannerFileName: shop.bannerFileName,
+            createdAt: serverTimestamp(),
+            duration: shop.duration || null,
+            status: shop.status,
+            baseBannerId,
+          });
+
+          return { success: true, shopName: shop.name };
         } catch (error) {
-            const errorMessage =
+          const errorMessage =
             error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error(`Error sharing link for ${shop.name}:`, error);
-            return { success: false, shopName: shop.name, error: errorMessage };
+          console.error(`Error sharing link for ${shop.name}:`, error);
+          return { success: false, shopName: shop.name, error: errorMessage };
         }
-        })
+      })
     );
     return results;
   } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unknown error occurred';
-      console.error('Error in shareBannersByLink:', error);
-      throw new Error(errorMessage);
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Error in shareBannersByLink:', error);
+    throw new Error(errorMessage);
   }
 }
 

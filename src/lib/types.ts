@@ -2,9 +2,9 @@ export interface Shop {
   id: string;
   name: string;
   email: string;
-  logo: string; // Data URI
-  address: string;
-  phone: string;
+  logo?: string; // Data URI
+  address?: string;
+  phone?: string;
   groups: string[]; // Array of group IDs
   status: 'active' | 'suspended';
   duration?: number | null; // Subscription duration in days
