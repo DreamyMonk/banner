@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { addShop, updateShop, deleteShop, addGroup, deleteGroup } from './actions';
+import { addShop, updateShop, deleteShop, addGroup, deleteGroup, updateGroup } from './actions';
 import type { Shop, Group } from '@/lib/types';
 
 import {
@@ -91,6 +91,8 @@ export default function ShopsPage() {
   const [filter, setFilter] = useState<FilterStatus>('all');
   const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState('');
 
   useEffect(() => {
     const db = getFirestore(app);
@@ -289,6 +291,24 @@ export default function ShopsPage() {
         toast({
           title: 'Error',
           description: 'Could not add group.',
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const handleUpdateGroup = async () => {
+    if (editingGroup && editingGroupName) {
+      try {
+        await updateGroup(editingGroup.id, editingGroupName);
+        setEditingGroup(null);
+        setEditingGroupName('');
+        toast({ title: 'Group Updated', description: `Updated group: ${editingGroupName}` });
+      } catch (error) {
+        console.error('Failed to update group:', error);
+        toast({
+          title: 'Error',
+          description: 'Could not update group.',
           variant: 'destructive',
         });
       }
@@ -568,33 +588,60 @@ export default function ShopsPage() {
                   key={group.id}
                   className="flex items-center justify-between bg-muted p-2 rounded-md"
                 >
-                  <span className="text-sm font-medium">{group.name}</span>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Delete {group.name}?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will remove the group but not the shops inside
-                          it.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteGroup(group.id)}
+                  {editingGroup?.id === group.id ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editingGroupName}
+                        onChange={(e) => setEditingGroupName(e.target.value)}
+                        className="h-8"
+                      />
+                      <Button onClick={handleUpdateGroup} size="sm">Save</Button>
+                      <Button onClick={() => setEditingGroup(null)} size="sm" variant="ghost">Cancel</Button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-sm font-medium">{group.name}</span>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            setEditingGroup(group);
+                            setEditingGroupName(group.name);
+                          }}
                         >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete {group.name}?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove the group but not the shops inside
+                                it.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteGroup(group.id)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
               <div className="flex gap-2 pt-2">

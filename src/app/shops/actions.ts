@@ -32,6 +32,11 @@ export async function addGroup(groupName: string) {
   await addDoc(collection(db, 'groups'), { name: groupName });
 }
 
+export async function updateGroup(groupId: string, newName: string) {
+  const groupRef = doc(db, 'groups', groupId);
+  await updateDoc(groupRef, { name: newName });
+}
+
 export async function deleteGroup(groupId: string) {
   await deleteDoc(doc(db, 'groups', groupId));
 }
