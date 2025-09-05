@@ -55,6 +55,7 @@ import {
   Trash2,
   Edit,
   X,
+  Check,
   ArrowLeft,
   Search,
   CheckCircle,
@@ -171,7 +172,7 @@ export default function ShopsPage() {
         status: isEditing.status || 'active',
         duration: isEditing.duration || null,
       });
-      setLogoPreview(isEditing.logo);
+        setLogoPreview(isEditing.logo || null);
     } else {
       setFormData(initialShopState);
       setLogoPreview(null);
@@ -595,8 +596,12 @@ export default function ShopsPage() {
                         onChange={(e) => setEditingGroupName(e.target.value)}
                         className="h-8"
                       />
-                      <Button onClick={handleUpdateGroup} size="sm">Save</Button>
-                      <Button onClick={() => setEditingGroup(null)} size="sm" variant="ghost">Cancel</Button>
+                      <Button onClick={handleUpdateGroup} size="icon" className="h-8 w-8">
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button onClick={() => setEditingGroup(null)} size="icon" variant="ghost" className="h-8 w-8">
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   ) : (
                     <>

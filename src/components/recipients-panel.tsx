@@ -1,3 +1,5 @@
+"use client";
+
 import type { Dispatch, SetStateAction } from 'react';
 import type { Group, Shop } from '@/lib/types';
 import { Checkbox } from '@/components/ui/checkbox';

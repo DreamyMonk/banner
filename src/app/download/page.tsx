@@ -6,14 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getBannerForPhone } from './actions';
+import { getBannersForPhone } from './actions';
 import Image from 'next/image';
 import { Loader2, Download } from 'lucide-react';
 
 const STORAGE_KEY = 'verifiedPhoneNumber';
 
-type BannerData = { 
-  name: string; 
+type BannerData = {
+  name: string;
   banner: string;
   bannerFileName: string;
 };
@@ -23,7 +23,7 @@ export default function DownloadPage() {
 
   const [phone, setPhone] = useState('');
   const [isVerified, setIsVerified] = useState(false);
-  const [bannerData, setBannerData] = useState<BannerData | null>(null);
+  const [bannerData, setBannerData] = useState<BannerData[]>([]);
   const [isLoading, setIsLoading] = useState(true); // Start loading to check storage
   const [error, setError] = useState<string | null>(null);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
@@ -45,20 +45,20 @@ export default function DownloadPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await getBannerForPhone(phoneToVerify);
-      if ('banner' in result) {
-        setBannerData(result);
+      const result = await getBannersForPhone(phoneToVerify);
+      if ('banners' in result) {
+        setBannerData(result.banners);
         setIsVerified(true);
-        localStorage.setItem(STORAGE_KEY, phoneToVerify); // Save the verified number
+        localStorage.setItem(STORAGE_KEY, phoneToVerify);
       } else {
         setError(result.error || 'Could not retrieve banner data.');
         setIsVerified(false);
-        setBannerData(null);
-        localStorage.removeItem(STORAGE_KEY); // Clear invalid saved number
+        setBannerData([]);
+        localStorage.removeItem(STORAGE_KEY);
         toast({
-            title: 'Verification Failed',
-            description: result.error,
-            variant: 'destructive'
+          title: 'Verification Failed',
+          description: result.error,
+          variant: 'destructive',
         });
       }
     } catch (err) {
@@ -78,21 +78,10 @@ export default function DownloadPage() {
     handleVerify(phone);
   };
   
-  const handleDownload = () => {
-    if (bannerData) {
-        const link = document.createElement('a');
-        link.href = bannerData.banner;
-        link.download = `${bannerData.bannerFileName}_${bannerData.name.replace(/ /g, '_')}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-  };
-
   const handleTryAnotherNumber = () => {
     localStorage.removeItem(STORAGE_KEY);
     setIsVerified(false);
-    setBannerData(null);
+    setBannerData([]);
     setPhone('');
     setError(null);
   };
@@ -108,27 +97,42 @@ export default function DownloadPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/50 p-4">
       <Card className="w-full max-w-md shadow-lg">
-        {isVerified && bannerData ? (
-             <>
-             <CardHeader>
-               <CardTitle>Your Banner for {bannerData.name}</CardTitle>
-               <CardDescription>
-                 Your banner is ready. Click the button below to download it.
-               </CardDescription>
-             </CardHeader>
-             <CardContent className="space-y-4">
-               <div className="relative aspect-[1200/630] w-full overflow-hidden rounded-md border">
-                   <Image src={bannerData.banner} alt={`Banner for ${bannerData.name}`} layout="fill" objectFit="contain" />
-               </div>
-               <Button onClick={handleDownload} className="w-full" size="lg">
-                 <Download className="mr-2 h-4 w-4" />
-                 Download Image
-               </Button>
-               <Button onClick={handleTryAnotherNumber} className="w-full" variant="outline">
-                 Not your banner? Try another number.
-               </Button>
-             </CardContent>
-           </>
+        {isVerified && bannerData.length > 0 ? (
+          <>
+            <CardHeader>
+              <CardTitle>Your Banners</CardTitle>
+              <CardDescription>
+                Select and download any of your available banners below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {bannerData.map((b, idx) => (
+                <div key={idx} className="space-y-2">
+                  <div className="relative aspect-[1200/630] w-full overflow-hidden rounded-md border">
+                    <Image src={b.banner} alt={`Banner for ${b.name}`} fill style={{ objectFit: 'contain' }} />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = b.banner;
+                      link.download = `${b.bannerFileName}_${b.name.replace(/ /g, '_')}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Image
+                  </Button>
+                </div>
+              ))}
+              <Button onClick={handleTryAnotherNumber} className="w-full" variant="outline">
+                Not your banner? Try another number.
+              </Button>
+            </CardContent>
+          </>
         ) : (
             <>
             <CardHeader>
