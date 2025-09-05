@@ -1,3 +1,5 @@
+"use client";
+
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -43,9 +45,8 @@ export function LayersPanel({ elements, selectedElementId, setSelectedElementId,
           >
             <SortableContext items={elements} strategy={verticalListSortingStrategy}>
               {elements.map(element => (
-                  <SortableItem 
-                      key={element.id} 
-                      id={element.id}
+                  <SortableItem
+                      key={element.id}
                       element={element}
                       isSelected={selectedElementId === element.id}
                       onSelect={() => setSelectedElementId(element.id)}
@@ -62,7 +63,7 @@ export function LayersPanel({ elements, selectedElementId, setSelectedElementId,
   );
 }
 
-function SortableItem({ element, isSelected, onSelect, onRemove }: { id: string, element: BannerElement, isSelected: boolean, onSelect: () => void, onRemove: () => void}) {
+function SortableItem({ element, isSelected, onSelect, onRemove }: { element: BannerElement, isSelected: boolean, onSelect: () => void, onRemove: () => void}) {
     const {
       attributes,
       listeners,
