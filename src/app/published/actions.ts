@@ -11,6 +11,7 @@ export async function getPublishedBanners() {
     const data = docSnap.data();
     return {
       id: docSnap.id,
+      name: data.name || 'Untitled Banner',
       banner: data.baseBannerDataUri as string,
       createdAt: data.createdAt?.toDate().toISOString() || null,
     };

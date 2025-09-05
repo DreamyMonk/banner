@@ -8,14 +8,16 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getBannersForPhone } from './actions';
 import Image from 'next/image';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, ArrowLeft } from 'lucide-react';
 
 const STORAGE_KEY = 'verifiedPhoneNumber';
 
 type BannerData = {
   name: string;
+  shopName: string;
   banner: string;
   bannerFileName: string;
+  createdAt: string | null;
 };
 
 export default function DownloadPage() {
@@ -24,23 +26,22 @@ export default function DownloadPage() {
   const [phone, setPhone] = useState('');
   const [isVerified, setIsVerified] = useState(false);
   const [bannerData, setBannerData] = useState<BannerData[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start loading to check storage
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
 
   useEffect(() => {
-    // This effect runs once on component mount to check for a saved phone number.
     const savedPhone = localStorage.getItem(STORAGE_KEY);
     if (savedPhone) {
       setPhone(savedPhone);
-      handleVerify(savedPhone); // Automatically try to verify if a number is saved
+      handleVerify(savedPhone, true); // Automatically verify on load
     } else {
       setIsLoading(false);
     }
     setHasCheckedStorage(true);
-  }, []); // Empty dependency array ensures this runs only once.
+  }, []);
 
-  const handleVerify = async (phoneToVerify: string) => {
+  const handleVerify = async (phoneToVerify: string, isAutoVerify = false) => {
     if (!phoneToVerify) return;
     setIsLoading(true);
     setError(null);
@@ -55,19 +56,23 @@ export default function DownloadPage() {
         setIsVerified(false);
         setBannerData([]);
         localStorage.removeItem(STORAGE_KEY);
-        toast({
-          title: 'Verification Failed',
-          description: result.error,
-          variant: 'destructive',
-        });
+        if (!isAutoVerify) {
+            toast({
+              title: 'Verification Failed',
+              description: result.error,
+              variant: 'destructive',
+            });
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred.');
-       toast({
+      if (!isAutoVerify) {
+        toast({
             title: 'Error',
             description: 'An unexpected error occurred.',
             variant: 'destructive'
         });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,60 +90,69 @@ export default function DownloadPage() {
     setPhone('');
     setError(null);
   };
+  
+  const handleDownload = (b: BannerData) => {
+    const link = document.createElement('a');
+    link.href = b.banner;
+    link.download = `${b.bannerFileName}_${b.name.replace(/ /g, '_')}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const shopName = bannerData.length > 0 ? bannerData[0].shopName : '';
 
   if (!hasCheckedStorage) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted/50 p-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/50 p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-muted/50 p-4 sm:p-6 md:p-8">
+      <Card className="w-full max-w-lg shadow-lg">
         {isVerified && bannerData.length > 0 ? (
           <>
             <CardHeader>
-              <CardTitle>Your Banners</CardTitle>
+              <CardTitle className="text-2xl">Your Banners for {shopName}</CardTitle>
               <CardDescription>
-                Select and download any of your available banners below.
+                Here are the banners associated with your phone number, sorted by most recent.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {bannerData.map((b, idx) => (
-                <div key={idx} className="space-y-2">
-                  <div className="relative aspect-[1200/630] w-full overflow-hidden rounded-md border">
-                    <Image src={b.banner} alt={`Banner for ${b.name}`} fill style={{ objectFit: 'contain' }} />
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto p-1">
+                {bannerData.map((b, idx) => (
+                  <div key={idx} className="border rounded-lg overflow-hidden flex flex-col group">
+                    <div className="relative aspect-[1200/630] w-full bg-muted overflow-hidden">
+                      <Image src={b.banner} alt={`Banner for ${b.name}`} fill style={{ objectFit: 'contain' }} />
+                    </div>
+                    <div className="p-3 bg-background flex-grow flex flex-col justify-between">
+                        <div>
+                            <p className="font-semibold truncate" title={b.name}>{b.name}</p>
+                            {b.createdAt && <p className="text-xs text-muted-foreground">{new Date(b.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}</p>}
+                        </div>
+                        <Button onClick={() => handleDownload(b)} className="w-full mt-3" size="sm">
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                        </Button>
+                    </div>
                   </div>
-                  <Button
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = b.banner;
-                      link.download = `${b.bannerFileName}_${b.name.replace(/ /g, '_')}.png`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Image
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
               <Button onClick={handleTryAnotherNumber} className="w-full" variant="outline">
-                Not your banner? Try another number.
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Use a different number
               </Button>
             </CardContent>
           </>
         ) : (
             <>
-            <CardHeader>
-              <CardTitle>Download Your Banner</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Download Your Banner</CardTitle>
               <CardDescription>
-                To access your personalized banner, please enter the phone number associated with your shop.
+                Enter your shop's phone number to see your available banners.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -148,18 +162,19 @@ export default function DownloadPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="Enter your phone number"
+                    placeholder="e.g., +1234567890"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
+                    className="text-center"
                   />
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+                {error && <p className="text-sm text-destructive text-center">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    'View Banner'
+                    'View My Banners'
                   )}
                 </Button>
               </form>

@@ -439,7 +439,7 @@ export default function EditorPage() {
         return;
       }
 
-      const results = await shareBannersByLink(bannerImage, shopsWithBanners);
+      const results = await shareBannersByLink(bannerImage, shopsWithBanners, bannerFileName || 'Untitled Banner');
       const successCount = results.filter(r => r.success).length;
       const errorCount = results.length - successCount;
 

@@ -159,11 +159,13 @@ export async function sendBannersByEmail(
 
 export async function shareBannersByLink(
   baseBanner: string,
-  shops: ShopWithBanner[]
+  shops: ShopWithBanner[],
+  baseBannerName: string,
 ) {
   try {
     // Store base banner information
     const baseBannerDoc = await addDoc(collection(db, 'publishedBanners'), {
+      name: baseBannerName,
       baseBannerDataUri: baseBanner,
       createdAt: serverTimestamp(),
     });
