@@ -429,8 +429,17 @@ export default function EditorPage() {
         setIsSending(false);
         return;
       }
+      if (!bannerImage) {
+        toast({
+          title: 'No Banner Image',
+          description: 'Please upload a banner image before sharing.',
+          variant: 'destructive',
+        });
+        setIsSending(false);
+        return;
+      }
 
-      const results = await shareBannersByLink(shopsWithBanners);
+      const results = await shareBannersByLink(bannerImage, shopsWithBanners);
       const successCount = results.filter(r => r.success).length;
       const errorCount = results.length - successCount;
 
