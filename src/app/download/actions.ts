@@ -1,6 +1,6 @@
 'use server';
 
-import { getFirestore, collection, query, where, getDocs, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, Timestamp, addDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const db = getFirestore(app);
@@ -51,6 +51,18 @@ export async function getBannersForPhone(phone: string): Promise<BannerResult> {
         if (new Date() > expirationDate) {
           continue; // Skip expired banners
         }
+      }
+
+      // Log the download
+      try {
+        await addDoc(collection(db, 'bannerDownloads'), {
+          phone: phone,
+          bannerId: docSnap.id,
+          shopName: docData.shopName,
+          downloadedAt: new Date(),
+        });
+      } catch (error) {
+        console.error('Error logging banner download:', error);
       }
 
       // NEW: Get the banner name from the publishedBanners collection

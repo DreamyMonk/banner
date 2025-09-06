@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users, LogOut, Trash } from 'lucide-react';
+import { Users, LogOut, Trash, BarChart } from 'lucide-react';
 import { logout } from '@/app/login/actions';
 
 const BeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -44,6 +44,11 @@ export function Header({ onClearBanner }: HeaderProps) {
         </Button>
         <Button asChild>
           <Link href="/published">Published Banners</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/analytics">
+            <BarChart className="mr-2" /> Analytics
+          </Link>
         </Button>
          <Button variant="outline" onClick={onClearBanner}>
           <Trash className="mr-2" /> Clear Editor
