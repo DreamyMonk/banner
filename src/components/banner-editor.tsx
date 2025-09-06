@@ -345,9 +345,9 @@ export default function BannerEditor({
   const sensors = useSensor(PointerSensor);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-6 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-4 md:p-6 h-full">
       <div
-        className="lg:col-span-2 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
+        className="lg:col-span-3 flex flex-col items-center justify-center bg-muted/50 rounded-lg p-4 relative overflow-hidden"
         ref={editorWrapperRef}
       >
         <DndContext onDragEnd={handleElementDragEnd} sensors={[sensors]}>
@@ -434,9 +434,9 @@ export default function BannerEditor({
           
           <TabsContent
             value="setup"
-            className="flex-1 min-h-0 overflow-y-auto"
+            className="flex-1 min-h-0 overflow-y-auto p-6"
           >
-            <div className="space-y-6 px-6 pb-6">
+            <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-headline mb-2">Banner</h3>
                 <Input
@@ -479,9 +479,9 @@ export default function BannerEditor({
           
           <TabsContent
             value="send"
-            className="flex-1 min-h-0 overflow-y-auto"
+            className="flex-1 min-h-0 overflow-y-auto p-6"
           >
-              <div className="space-y-6 px-6 pb-6">
+              <div className="space-y-6">
               <div>
                   <h3 className="text-lg font-headline mb-2 flex items-center gap-2">
                   <Users />
@@ -559,7 +559,7 @@ export default function BannerEditor({
                       </>
                   ) : (
                       <>
-                      <Share2 className="mr-2" /> Push to Download
+                      <Share2 className="mr-2" /> Share Banners
                       </>
                   )}
                   </Button>

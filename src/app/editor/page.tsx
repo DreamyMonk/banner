@@ -37,16 +37,6 @@ import {
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
 import { generateImageForShop } from '@/lib/image-generator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 const db = getFirestore(app);
 
@@ -54,7 +44,6 @@ export default function EditorPage() {
   const { toast } = useToast();
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [bannerFileName, setBannerFileName] = useState<string | null>(null);
   const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
 
@@ -194,49 +183,6 @@ export default function EditorPage() {
     setSelectedElementId(null);
     setBannerFileName(null);
   }
-
-  const handleDeleteSharedBanners = async () => {
-    const recipients = getRecipients();
-    if (recipients.length === 0) {
-      toast({
-        title: 'No Recipients Selected',
-        description: 'Please select groups to delete their shared banners.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSending(true);
-    toast({
-      title: 'Deleting Banners...',
-      description: `Requesting deletion for ${recipients.length} shops.`,
-    });
-
-    try {
-      const result = await deleteSharedBanners(recipients);
-      if (result.success) {
-        toast({
-          title: 'Deletion Successful',
-          description: `${result.deletedCount} shared banners have been removed.`,
-        });
-      } else {
-        throw new Error(result.error || 'An unknown error occurred.');
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unknown error occurred';
-      toast({
-        title: 'Deletion Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      console.error('Error deleting shared banners:', error);
-    } finally {
-      setIsSending(false);
-      setIsDeleteAlertOpen(false);
-    }
-  };
-
 
   const addElement = (type: 'logo' | 'text') => {
     const newElement: BannerElement = {
@@ -534,7 +480,6 @@ export default function EditorPage() {
       <ClientOnly>
         <Header 
           onClearBanner={clearBanner} 
-          onDeleteBanner={() => setIsDeleteAlertOpen(true)} 
         />
       </ClientOnly>
       <main className="flex-1 min-h-0">
@@ -565,23 +510,6 @@ export default function EditorPage() {
           />
         </ClientOnly>
       </main>
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the shared banners for all shops in the selected groups.
-              This action cannot be undone and will prevent them from being downloaded.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSharedBanners}>
-              Yes, delete banners
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

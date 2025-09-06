@@ -8,7 +8,7 @@ const db = getFirestore(app);
 type BannerData = {
   name: string;
   shopName: string;
-  banner: string;
+  bannerUrl: string;
   bannerFileName: string;
   createdAt: string | null; // Add this to sort by creation date
 };
@@ -64,17 +64,17 @@ export async function getBannersForPhone(phone: string): Promise<BannerResult> {
       }
 
       const shopName = typeof docData.shopName === 'string' ? docData.shopName : '';
-      const banner = typeof docData.bannerDataUri === 'string' ? docData.bannerDataUri : '';
+      const bannerUrl = typeof docData.bannerUrl === 'string' ? docData.bannerUrl : '';
       const bannerFileName = typeof docData.bannerFileName === 'string' && docData.bannerFileName.length > 0
         ? docData.bannerFileName
         : 'banner';
 
-      if (!banner) continue;
+      if (!bannerUrl) continue;
 
       banners.push({
         name: bannerName,
         shopName,
-        banner,
+        bannerUrl,
         bannerFileName,
         createdAt: createdAtDate ? createdAtDate.toISOString() : null
       });

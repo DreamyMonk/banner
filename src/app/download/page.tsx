@@ -15,7 +15,7 @@ const STORAGE_KEY = 'verifiedPhoneNumber';
 type BannerData = {
   name: string;
   shopName: string;
-  banner: string;
+  bannerUrl: string;
   bannerFileName: string;
   createdAt: string | null;
 };
@@ -93,7 +93,7 @@ export default function DownloadPage() {
   
   const handleDownload = (b: BannerData) => {
     const link = document.createElement('a');
-    link.href = b.banner;
+    link.href = b.bannerUrl;
     link.download = `${b.bannerFileName}_${b.name.replace(/ /g, '_')}.png`;
     document.body.appendChild(link);
     link.click();
@@ -126,7 +126,7 @@ export default function DownloadPage() {
                 {bannerData.map((b, idx) => (
                   <div key={idx} className="border rounded-lg overflow-hidden flex flex-col group">
                     <div className="relative aspect-[1200/630] w-full bg-muted overflow-hidden">
-                      <Image src={b.banner} alt={`Banner for ${b.name}`} fill style={{ objectFit: 'contain' }} />
+                      <Image src={b.bannerUrl} alt={`Banner for ${b.name}`} fill style={{ objectFit: 'contain' }} unoptimized/>
                     </div>
                     <div className="p-3 bg-background flex-grow flex flex-col justify-between">
                         <div>

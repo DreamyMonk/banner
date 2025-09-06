@@ -3,15 +3,27 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getPublishedBanners, deletePublishedBanner } from './actions';
+import { getPublishedBanners, deletePublishedBanner, deleteAllPublishedBanners } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Trash2, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 interface PublishedBanner {
   id: string;
   name: string;
-  banner: string;
+  bannerUrl: string;
   createdAt: string | null;
 }
 
@@ -19,10 +31,10 @@ export default function PublishedPage() {
   const [banners, setBanners] = useState<PublishedBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchBanners = async () => {
     const data = await getPublishedBanners();
-    // Sort banners by creation date, newest first
     data.sort((a, b) => {
         if (a.createdAt && b.createdAt) {
             return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -44,9 +56,22 @@ export default function PublishedPage() {
   };
 
   const handleDelete = async (id: string) => {
+    setDeletingId(id);
     const result = await deletePublishedBanner(id);
     if (result.success) {
       setBanners(prev => prev.filter(b => b.id !== id));
+    } else {
+      alert(`Failed to delete banner: ${result.error}`);
+    }
+    setDeletingId(null);
+  };
+
+  const handleDeleteAll = async () => {
+    const result = await deleteAllPublishedBanners();
+    if (result.success) {
+      setBanners([]);
+    } else {
+      alert(`Failed to delete all banners: ${result.error}`);
     }
   };
 
@@ -62,6 +87,27 @@ export default function PublishedPage() {
             <p className="text-muted-foreground mt-1">A list of all your published base banners.</p>
         </div>
         <div className="flex items-center gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={banners.length === 0}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete All
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all published and shared banners.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAll}>Delete All</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
             <Link href="/" passHref>
                 <Button variant="outline">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -89,11 +135,20 @@ export default function PublishedPage() {
               </CardHeader>
               <CardContent className="p-4 space-y-4 flex-grow flex flex-col justify-between">
                 <div className="relative aspect-[1200/630] w-full overflow-hidden rounded-md border bg-muted">
-                  <Image src={b.banner} alt={b.name} fill style={{ objectFit: 'contain' }} />
+                  <Image src={b.bannerUrl} alt={b.name} fill style={{ objectFit: 'contain' }} unoptimized />
                 </div>
-                <Button variant="destructive" className="w-full" onClick={() => handleDelete(b.id)}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => handleDelete(b.id)}
+                  disabled={deletingId === b.id}
+                >
+                  {deletingId === b.id ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  {deletingId === b.id ? 'Deleting...' : 'Delete'}
                 </Button>
               </CardContent>
             </Card>

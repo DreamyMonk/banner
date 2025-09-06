@@ -1,6 +1,3 @@
-// This file is not checked in to source control.
-// It is created by the "firebase" command.
-
 export const firebaseConfig = {
   apiKey: "AIzaSyDNFdVprEjmbwXCMYfH5XawkZ8DJspmc4w",
   authDomain: "image-sendder.firebaseapp.com",
