@@ -396,6 +396,7 @@ export default function ShopsPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead>Groups</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -403,7 +404,7 @@ export default function ShopsPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center">Loading shops...</TableCell>
+                      <TableCell colSpan={6} className="text-center">Loading shops...</TableCell>
                     </TableRow>
                   ) : filteredShops.map(shop => {
                     const isExpired = expiredShopIds.has(shop.id);
@@ -420,6 +421,7 @@ export default function ShopsPage() {
                                 <Badge variant="destructive"><XCircle className="mr-1" />Suspended</Badge>
                             )}
                         </TableCell>
+                        <TableCell>{shop.phone}</TableCell>
                         <TableCell>
                             <div className="flex flex-wrap gap-1">
                             {shop.groups &&

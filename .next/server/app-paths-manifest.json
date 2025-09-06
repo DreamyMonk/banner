@@ -1,3 +1,6 @@
 {
-  "/download/page": "app/download/page.js"
+  "/download/page": "app/download/page.js",
+  "/editor/page": "app/editor/page.js",
+  "/shops/page": "app/shops/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
 }
