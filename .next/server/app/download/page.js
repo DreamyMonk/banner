@@ -272,6 +272,17 @@ eval("Promise.resolve(/*! import() eager */).then(__webpack_require__.bind(__web
 
 /***/ }),
 
+/***/ "(ssr)/./loader.js":
+/*!*******************!*\
+  !*** ./loader.js ***!
+  \*******************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ cloudinaryLoader)\n/* harmony export */ });\n/* __next_internal_client_entry_do_not_use__ default auto */ function cloudinaryLoader({ src, width, quality }) {\n    const params = [\n        \"f_auto\",\n        \"c_limit\",\n        `w_${width}`,\n        `q_${quality || \"auto\"}`\n    ];\n    return `https://res.cloudinary.com/zedsu/image/fetch/${params.join(\",\")}/${src}`;\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHNzcikvLi9sb2FkZXIuanMiLCJtYXBwaW5ncyI6Ijs7Ozs2REFFZSxTQUFTQSxpQkFBaUIsRUFBRUMsR0FBRyxFQUFFQyxLQUFLLEVBQUVDLE9BQU8sRUFBRTtJQUM5RCxNQUFNQyxTQUFTO1FBQUM7UUFBVTtRQUFXLENBQUMsRUFBRSxFQUFFRixNQUFNLENBQUM7UUFBRSxDQUFDLEVBQUUsRUFBRUMsV0FBVyxPQUFPLENBQUM7S0FBQztJQUM1RSxPQUFPLENBQUMsNkNBQTZDLEVBQUVDLE9BQU9DLElBQUksQ0FDaEUsS0FDQSxDQUFDLEVBQUVKLElBQUksQ0FBQztBQUNaIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vbmV4dG4vLi9sb2FkZXIuanM/Y2RlNCJdLCJzb3VyY2VzQ29udGVudCI6WyIndXNlIGNsaWVudCdcbiBcbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIGNsb3VkaW5hcnlMb2FkZXIoeyBzcmMsIHdpZHRoLCBxdWFsaXR5IH0pIHtcbiAgY29uc3QgcGFyYW1zID0gWydmX2F1dG8nLCAnY19saW1pdCcsIGB3XyR7d2lkdGh9YCwgYHFfJHtxdWFsaXR5IHx8ICdhdXRvJ31gXVxuICByZXR1cm4gYGh0dHBzOi8vcmVzLmNsb3VkaW5hcnkuY29tL3plZHN1L2ltYWdlL2ZldGNoLyR7cGFyYW1zLmpvaW4oXG4gICAgJywnLFxuICApfS8ke3NyY31gXG59XG4iXSwibmFtZXMiOlsiY2xvdWRpbmFyeUxvYWRlciIsInNyYyIsIndpZHRoIiwicXVhbGl0eSIsInBhcmFtcyIsImpvaW4iXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(ssr)/./loader.js\n");
+
+/***/ }),
+
 /***/ "(ssr)/./src/app/download/actions.ts":
 /*!*************************************!*\
   !*** ./src/app/download/actions.ts ***!
@@ -520,7 +531,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 var __webpack_require__ = require("../../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@opentelemetry","vendor-chunks/@firebase","vendor-chunks/protobufjs","vendor-chunks/@radix-ui","vendor-chunks/tailwind-merge","vendor-chunks/long","vendor-chunks/@protobufjs","vendor-chunks/lodash.camelcase","vendor-chunks/lucide-react","vendor-chunks/@grpc","vendor-chunks/idb","vendor-chunks/class-variance-authority","vendor-chunks/@swc","vendor-chunks/firebase","vendor-chunks/clsx"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fdownload%2Fpage&page=%2Fdownload%2Fpage&appPaths=%2Fdownload%2Fpage&pagePath=private-next-app-dir%2Fdownload%2Fpage.tsx&appDir=%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fuser%2Fbanner&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@opentelemetry","vendor-chunks/@firebase","vendor-chunks/protobufjs","vendor-chunks/@radix-ui","vendor-chunks/@protobufjs","vendor-chunks/lucide-react","vendor-chunks/@swc","vendor-chunks/idb","vendor-chunks/firebase","vendor-chunks/tailwind-merge","vendor-chunks/clsx","vendor-chunks/@grpc","vendor-chunks/class-variance-authority","vendor-chunks/long","vendor-chunks/lodash.camelcase"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader.js?name=app%2Fdownload%2Fpage&page=%2Fdownload%2Fpage&appPaths=%2Fdownload%2Fpage&pagePath=private-next-app-dir%2Fdownload%2Fpage.tsx&appDir=%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2Fhome%2Fuser%2Fbanner&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

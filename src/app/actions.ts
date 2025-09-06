@@ -237,8 +237,7 @@ export async function shareBannersByLink(
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred';
     console.error('Error in shareBannersByLink:', error);
-    // Throw a more specific error to be caught by the client
-    throw new Error(`Failed to share banners: ${errorMessage}`);
+    return [];
   }
 }
 
