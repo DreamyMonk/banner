@@ -2,109 +2,13 @@
   "node": {
     "a0ec159550661c44b1d5118f58c0d91a50bbba28": {
       "workers": {
-        "app/download/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fdownload%2Factions.ts%22%2C%5B%22getBannersForPhone%22%5D%5D%5D&__client_imported__=true!"
+        "app/download/page": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fdownload%2Factions.ts%22%2C%5B%22getBannersForPhone%22%5D%5D%5D&__client_imported__=!"
       },
       "layer": {
-        "app/download/page": "action-browser"
-      }
-    },
-    "3c07c415495cc6a686d453bfd06a10c6766d5a01": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "915bcd80004a0b4078f89075d57fab07e002e41d": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "cfd7a8f9cb3dc06beeb3e7c9d13a70013d1b2698": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "d474acdedbc37c9d6af9ce69dae669573d4fe2ec": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "bb1601545d641d9b6fcbbd2b0657766883b9a155": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "e27a4d092f2ce5168a7b56482efbc3020ff8af31": {
-      "workers": {
-        "app/editor/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Factions.ts%22%2C%5B%22deleteSharedBanners%22%2C%22shareBannersByLink%22%2C%22sendBannersByEmail%22%2C%22cleanupExpiredBanners%22%5D%5D%2C%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22login%22%2C%22logout%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/editor/page": "action-browser"
-      }
-    },
-    "6b50febce07c5710d71e49e0a8ebffda0ab7b2dd": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
-      }
-    },
-    "7af156ad2b3f34cf15396eea287991521caffbde": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
-      }
-    },
-    "862827f7bb65170954501514948fce7d86337292": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
-      }
-    },
-    "a00ba1eb2495c92118a62945ca519be64a8f1d31": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
-      }
-    },
-    "abe50fdd33eb3c67cb4468598ccda513037a1a73": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
-      }
-    },
-    "f615d0173bfde40ed3c216683741c3084fa13f1b": {
-      "workers": {
-        "app/shops/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fuser%2Fbanner%2Fsrc%2Fapp%2Fshops%2Factions.ts%22%2C%5B%22addShop%22%2C%22addGroup%22%2C%22deleteGroup%22%2C%22deleteShop%22%2C%22updateGroup%22%2C%22updateShop%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/shops/page": "action-browser"
+        "app/download/page": "rsc"
       }
     }
   },
   "edge": {},
-  "encryptionKey": "JG0fFrdk+FAJZ9Ktm3tFDDKWeelGj5ay0y7iZddfAOU="
+  "encryptionKey": "HYopIr0pE86HEmD45+UmE24bWPIKDP9J7bUAdtf6rc4="
 }
