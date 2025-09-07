@@ -108,67 +108,79 @@ export async function sendBannersByEmail(
   emailSubject: string,
   emailBody: string
 ) {
-  const mailjet = new Mailjet({
-    apiKey: '16d3a777234c9d5624e6948bddb8c93d',
-    apiSecret: '674dcaf79502e10e9feae496ef4e68c5'
-  });
+  try {
+    const mailjet = new Mailjet({
+      apiKey: '16d3a777234c9d5624e6948bddb8c93d',
+      apiSecret: '674dcaf79502e10e9feae496ef4e68c5'
+    });
 
-  return processInBatches(shops, async shop => {
-    try {
-      if (!shop.bannerDataUri) {
-        throw new Error(`Banner for ${shop.name} is missing.`);
+    return processInBatches(shops, async shop => {
+      try {
+        if (!shop.bannerDataUri) {
+          throw new Error(`Banner for ${shop.name} is missing.`);
+        }
+        if (!shop.email) {
+          console.warn(`Email missing for shop ${shop.name}, skipping.`);
+          return { success: false, shopName: shop.name, error: "Email address is missing." };
+        }
+
+        const personalizedSubject = emailSubject
+          .replace(/{{shopName}}/g, shop.name)
+          .replace(/{{address}}/g, shop.address || '')
+          .replace(/{{phone}}/g, shop.phone || '')
+          .replace(/{{email}}/g, shop.email || '');
+
+        const emailHtml = generateEmailHTML(shop, emailBody);
+
+        const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
+        const bannerBase64 = shop.bannerDataUri.split(',')[1];
+        const fileName = `${shop.bannerFileName}_${shop.name.replace(/ /g, '_')}.png`;
+        const bannerAttachment: Attachment = {
+          ContentType: bannerMimeType,
+          Filename: fileName,
+          Base64Content: bannerBase64,
+        };
+        
+        const requestData = {
+            Messages: [
+            {
+                From: {
+                Email: 'banner@zedsu.com',
+                Name: 'Banners from Zedsu',
+                },
+                To: [
+                {
+                    Email: shop.email,
+                },
+                ],
+                Subject: personalizedSubject,
+                HTMLPart: emailHtml,
+                Attachments: [bannerAttachment],
+            },
+            ],
+        };
+
+        await mailjet.post('send', { version: 'v3.1' }).request(requestData);
+
+        return { success: true, shopName: shop.name };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error(`Error sending email to ${shop.name}:`, error);
+        return { success: false, shopName: shop.name, error: errorMessage };
       }
-      if (!shop.email) {
-        console.warn(`Email missing for shop ${shop.name}, skipping.`);
-        return { success: false, shopName: shop.name, error: "Email address is missing." };
-      }
-
-      const personalizedSubject = emailSubject
-        .replace(/{{shopName}}/g, shop.name)
-        .replace(/{{address}}/g, shop.address || '')
-        .replace(/{{phone}}/g, shop.phone || '')
-        .replace(/{{email}}/g, shop.email || '');
-
-      const emailHtml = generateEmailHTML(shop, emailBody);
-
-      const bannerMimeType = shop.bannerDataUri.split(';')[0].split(':')[1];
-      const bannerBase64 = shop.bannerDataUri.split(',')[1];
-      const fileName = `${shop.bannerFileName}_${shop.name.replace(/ /g, '_')}.png`;
-      const bannerAttachment: Attachment = {
-        ContentType: bannerMimeType,
-        Filename: fileName,
-        Base64Content: bannerBase64,
-      };
-      
-      const requestData = {
-          Messages: [
-          {
-              From: {
-              Email: 'banner@zedsu.com',
-              Name: 'Banners from Zedsu',
-              },
-              To: [
-              {
-                  Email: shop.email,
-              },
-              ],
-              Subject: personalizedSubject,
-              HTMLPart: emailHtml,
-              Attachments: [bannerAttachment],
-          },
-          ],
-      };
-
-      await mailjet.post('send', { version: 'v3.1' }).request(requestData);
-
-      return { success: true, shopName: shop.name };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'An unknown error occurred';
-      console.error(`Error sending email to ${shop.name}:`, error);
-      return { success: false, shopName: shop.name, error: errorMessage };
-    }
-  });
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Error in sendBannersByEmail:', error);
+    // Return an array of failure results for all shops in case of a top-level error
+    return shops.map(shop => ({
+      success: false,
+      shopName: shop.name,
+      error: `Failed to initialize email sending: ${errorMessage}`,
+    }));
+  }
 }
 
 export async function shareBannersByLink(
@@ -237,7 +249,12 @@ export async function shareBannersByLink(
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred';
     console.error('Error in shareBannersByLink:', error);
-    return [];
+    // Return an array of failure results for all shops in case of a top-level error
+    return shops.map(shop => ({
+      success: false,
+      shopName: shop.name,
+      error: `Failed to initiate link sharing: ${errorMessage}`,
+    }));
   }
 }
 

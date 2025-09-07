@@ -75,6 +75,8 @@ interface BannerEditorProps {
   setEmailBody: Dispatch<SetStateAction<string>>;
 }
 
+const logoPlaceholderSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999999' text-anchor='middle' dominant-baseline='middle'%3EPlaceholder Logo%3C/text%3E%3C/svg%3E`;
+
 const DraggableElement = ({
   element,
   isSelected,
@@ -133,7 +135,7 @@ const DraggableElement = ({
       {element.type === 'logo' && (
         <div className="relative w-full h-full aspect-[1/1]">
           <Image
-            src="https://picsum.photos/200/200"
+            src={logoPlaceholderSvg}
             alt="Placeholder Logo"
             fill
             className="object-contain pointer-events-none"

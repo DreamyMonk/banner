@@ -39,6 +39,8 @@ import { ClientOnly } from '@/components/client-only';
 import { generateImageForShop } from '@/lib/image-generator';
 
 const db = getFirestore(app);
+const placeholderSvg = `data:image/svg+xml,%3Csvg width='1200' height='630' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='%23cccccc' /%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='48' fill='%23666666' text-anchor='middle' dominant-baseline='middle'%3EUpload Banner Image%3C/text%3E%3C/svg%3E`;
+
 
 export default function EditorPage() {
   const { toast } = useToast();
@@ -122,7 +124,7 @@ export default function EditorPage() {
   }, [toast]);
 
   const [bannerImage, setBannerImage] = useState<string | null>(
-    'https://picsum.photos/1200/630'
+    placeholderSvg
   );
   const [imageDimensions, setImageDimensions] = useState<{
     width: number;
