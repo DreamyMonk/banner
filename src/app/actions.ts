@@ -188,6 +188,13 @@ export async function shareBannersByLink(
   shops: ShopWithBanner[],
   baseBannerName: string,
 ) {
+  if (!Array.isArray(shops)) {
+    // If shops is not an array, return an error.
+    return {
+      success: false,
+      error: "'shops' data is not in the expected format.",
+    };
+  }
   try {
     if (!baseBanner) throw new Error('Base banner data is missing.');
     const baseBannerBuffer = Buffer.from(baseBanner.split(',')[1], 'base64');
