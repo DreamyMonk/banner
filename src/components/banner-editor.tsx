@@ -59,7 +59,7 @@ interface BannerEditorProps {
   setSelectedElementId: (id: string | null) => void;
   updateElement: (id: string, newProps: Partial<BannerElement>) => void;
   removeElement: (id: string) => void;
-  addElement: (type: 'logo' | 'text') => void;
+  addElement: (type: 'logo' | 'text' | 'product1' | 'product2' | 'product3' | 'product4') => void;
   shops: Shop[];
   groups: Group[];
   selectedGroups: string[];
@@ -76,6 +76,7 @@ interface BannerEditorProps {
 }
 
 const logoPlaceholderSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999999' text-anchor='middle' dominant-baseline='middle'%3EPlaceholder Logo%3C/text%3E%3C/svg%3E`;
+const productPlaceholderSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999999' text-anchor='middle' dominant-baseline='middle'%3EProduct Image%3C/text%3E%3C/svg%3E`;
 
 const DraggableElement = ({
   element,
@@ -104,7 +105,7 @@ const DraggableElement = ({
   const style = {
     left: `${element.x}%`,
     top: `${element.y}%`,
-    width: element.type === 'logo' ? `${width}px` : 'auto',
+    width: (element.type === 'logo' || element.type.startsWith('product')) ? `${width}px` : 'auto',
     transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
     opacity: element.opacity / 100,
     border: isSelected ? '2px dashed hsl(var(--primary))' : 'none',
@@ -150,6 +151,16 @@ const DraggableElement = ({
         >
           {element.text}
         </span>
+      )}
+      {element.type.startsWith('product') && (
+        <div className="relative w-full h-full aspect-[1/1]">
+          <Image
+            src={productPlaceholderSvg}
+            alt={`Placeholder ${element.type}`}
+            fill
+            className="object-contain pointer-events-none"
+          />
+        </div>
       )}
 
       {isSelected && (
@@ -458,6 +469,18 @@ export default function BannerEditor({
                   </Button>
                   <Button variant="outline" onClick={() => addElement('text')}>
                     <Type className="mr-2" /> Text
+                  </Button>
+                  <Button variant="outline" onClick={() => addElement('product1')}>
+                     Product 1
+                  </Button>
+                  <Button variant="outline" onClick={() => addElement('product2')}>
+                     Product 2
+                  </Button>
+                  <Button variant="outline" onClick={() => addElement('product3')}>
+                     Product 3
+                  </Button>
+                  <Button variant="outline" onClick={() => addElement('product4')}>
+                     Product 4
                   </Button>
                 </div>
               </div>

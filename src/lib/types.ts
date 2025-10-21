@@ -1,3 +1,8 @@
+export interface Product {
+  name: string;
+  image: string; // Data URI
+}
+
 export interface Shop {
   id: string;
   name: string;
@@ -8,6 +13,11 @@ export interface Shop {
   groups: string[]; // Array of group IDs
   status: 'active' | 'suspended';
   duration?: number | null; // Subscription duration in days
+  instagram?: string;
+  facebook?: string;
+  youtube?: string;
+  website?: string;
+  products?: Product[];
 }
 
 export interface Group {
@@ -17,7 +27,7 @@ export interface Group {
 
 export type BannerElement = {
   id: string;
-  type: 'logo' | 'text';
+  type: 'logo' | 'text' | 'product1' | 'product2' | 'product3' | 'product4';
   x: number;
   y: number;
   scale: number;

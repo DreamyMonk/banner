@@ -16,7 +16,7 @@ import {
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { addShop, updateShop, deleteShop, addGroup, deleteGroup, updateGroup } from './actions';
-import type { Shop, Group } from '@/lib/types';
+import type { Shop, Group, Product } from '@/lib/types';
 
 import {
   AlertDialog,
@@ -76,6 +76,11 @@ const initialShopState: Omit<Shop, 'id'> = {
   phone: '',
   status: 'active',
   duration: null,
+  instagram: '',
+  facebook: '',
+  youtube: '',
+  website: '',
+  products: [],
 };
 
 type FilterStatus = 'all' | 'active' | 'suspended' | 'expired';
@@ -171,6 +176,11 @@ export default function ShopsPage() {
         phone: isEditing.phone || '',
         status: isEditing.status || 'active',
         duration: isEditing.duration || null,
+        instagram: isEditing.instagram || '',
+        facebook: isEditing.facebook || '',
+        youtube: isEditing.youtube || '',
+        website: isEditing.website || '',
+        products: isEditing.products || [],
       });
         setLogoPreview(isEditing.logo || null);
     } else {
@@ -220,6 +230,38 @@ export default function ShopsPage() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleProductChange = (index: number, field: keyof Product, value: string) => {
+    const updatedProducts = [...(formData.products || [])];
+    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
+    setFormData(prev => ({ ...prev, products: updatedProducts }));
+  };
+
+  const handleProductImageChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        handleProductChange(index, 'image', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addProduct = () => {
+    if ((formData.products?.length || 0) < 4) {
+      const newProduct: Product = { name: '', image: '' };
+      setFormData(prev => ({ ...prev, products: [...(prev.products || []), newProduct] }));
+    }
+  };
+
+  const removeProduct = (index: number) => {
+    const updatedProducts = [...(formData.products || [])];
+    updatedProducts.splice(index, 1);
+    setFormData(prev => ({ ...prev, products: updatedProducts }));
+  };
+
 
   const handleSaveShop = async () => {
     if (!formData.name || !formData.email || !formData.logo) {
@@ -522,6 +564,38 @@ export default function ShopsPage() {
                 />
               </div>
               <div className="grid w-full items-center gap-1.5">
+                 <Label htmlFor="instagram">Instagram URL</Label>
+                 <Input
+                   id="instagram"
+                   value={formData.instagram ?? ''}
+                   onChange={handleInputChange}
+                 />
+               </div>
+               <div className="grid w-full items-center gap-1.5">
+                 <Label htmlFor="facebook">Facebook URL</Label>
+                 <Input
+                   id="facebook"
+                   value={formData.facebook ?? ''}
+                   onChange={handleInputChange}
+                 />
+               </div>
+               <div className="grid w-full items-center gap-1.5">
+                 <Label htmlFor="youtube">YouTube URL</Label>
+                 <Input
+                   id="youtube"
+                   value={formData.youtube ?? ''}
+                   onChange={handleInputChange}
+                 />
+               </div>
+               <div className="grid w-full items-center gap-1.5">
+                 <Label htmlFor="website">Website URL</Label>
+                 <Input
+                   id="website"
+                   value={formData.website ?? ''}
+                   onChange={handleInputChange}
+                 />
+               </div>
+              <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="duration">Duration (days)</Label>
                 <Input
                   id="duration"
@@ -546,6 +620,41 @@ export default function ShopsPage() {
                   accept="image/*"
                   onChange={handleLogoChange}
                 />
+              </div>
+               <div className="space-y-4">
+                <Label>Products</Label>
+                {(formData.products || []).map((product, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 border rounded-md">
+                    <div className="space-y-2 flex-1">
+                       {product.image && (
+                        <img
+                          src={product.image}
+                          alt="Product preview"
+                          className="w-12 h-12 object-contain border rounded-md"
+                        />
+                      )}
+                      <Input
+                        placeholder="Product Name"
+                        value={product.name}
+                        onChange={(e) => handleProductChange(index, 'name', e.target.value)}
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleProductImageChange(index, e)}
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => removeProduct(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                {(formData.products?.length || 0) < 4 && (
+                  <Button onClick={addProduct} variant="outline" className="w-full">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Product
+                  </Button>
+                )}
               </div>
               <div className="grid w-full items-center gap-1.5">
                 <Label>Groups</Label>
