@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Image from 'next/image';
 import {
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 import {
   ImagePlus,
   Type,
@@ -49,6 +50,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface BannerEditorProps {
   bannerImage: string | null;
@@ -73,6 +75,10 @@ interface BannerEditorProps {
   setEmailSubject: Dispatch<SetStateAction<string>>;
   emailBody: string;
   setEmailBody: Dispatch<SetStateAction<string>>;
+  useBorder: boolean;
+  setUseBorder: Dispatch<SetStateAction<boolean>>;
+  borderWidth: number;
+  setBorderWidth: Dispatch<SetStateAction<number>>;
 }
 
 const logoPlaceholderSvg = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%23999999' text-anchor='middle' dominant-baseline='middle'%3EPlaceholder Logo%3C/text%3E%3C/svg%3E`;
@@ -208,6 +214,10 @@ export default function BannerEditor({
   setEmailSubject,
   emailBody,
   setEmailBody,
+  useBorder,
+  setUseBorder,
+  borderWidth,
+  setBorderWidth,
 }: BannerEditorProps) {
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -373,6 +383,7 @@ export default function BannerEditor({
               height: bannerDimensions.height,
               transform: `scale(${zoom})`,
               transformOrigin: 'center center',
+              border: useBorder ? `${borderWidth}px solid black` : 'none',
             }}
             onClick={() => setSelectedElementId(null)}
           >
@@ -459,6 +470,27 @@ export default function BannerEditor({
                   onChange={handleBannerImageUpload}
                   className="file:text-primary file:font-semibold"
                 />
+                 <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox id="use-border" checked={useBorder} onCheckedChange={() => setUseBorder(prev => !prev)} />
+                  <label
+                    htmlFor="use-border"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Add Border
+                  </label>
+                </div>
+                {useBorder && (
+                  <div className="mt-2 space-y-2">
+                    <Slider
+                      value={[borderWidth]}
+                      max={50}
+                      step={1}
+                      onValueChange={([value]) => setBorderWidth(value)} />
+                    <div className="text-center text-sm text-muted-foreground">
+                      Border Width: {borderWidth}px
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -554,7 +586,7 @@ export default function BannerEditor({
                   ))}
                   </div>
               </div>
-              <div className="grid grid-cols-1 gap-2 mt-4">
+              <div className="grid grid-cols-1 gap-2 mt-.tsx4">
                   <Button
                   size="lg"
                   onClick={handleSend}

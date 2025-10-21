@@ -29,10 +29,6 @@ import {
   getFirestore,
   QuerySnapshot,
   DocumentData,
-  query,
-  where,
-  getDocs,
-  Timestamp,
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { ClientOnly } from '@/components/client-only';
@@ -47,46 +43,17 @@ export default function EditorPage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [bannerFileName, setBannerFileName] = useState<string | null>(null);
-  const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
+  const [useBorder, setUseBorder] = useState(false);
+  const [borderWidth, setBorderWidth] = useState(10);
 
   useEffect(() => {
-    const fetchExpiredShops = async (allShops: Shop[]) => {
-        const q = query(collection(db, 'sharedBanners'));
-        const querySnapshot = await getDocs(q);
-        const now = new Date();
-        const expiredIds = new Set<string>();
-
-        const shopPhoneMap = new Map<string, string>();
-        allShops.forEach(s => {
-            if (s.phone) shopPhoneMap.set(s.phone, s.id);
-        });
-        
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
-            const createdAt = (data.createdAt as Timestamp)?.toDate();
-            const duration = data.duration;
-            const phone = data.phone;
-
-            if (createdAt && typeof duration === 'number' && phone) {
-                const expirationDate = new Date(createdAt);
-                expirationDate.setDate(expirationDate.getDate() + duration);
-                if (now > expirationDate) {
-                    const shopId = shopPhoneMap.get(phone);
-                    if(shopId) expiredIds.add(shopId);
-                }
-            }
-        });
-        setExpiredShopIds(expiredIds);
-    };
-
     const unsubShops = onSnapshot(
       collection(db, 'shops'),
-      async (snapshot: QuerySnapshot<DocumentData>) => {
+      (snapshot: QuerySnapshot<DocumentData>) => {
         const shopList = snapshot.docs.map(
             doc => ({ ...doc.data(), id: doc.id } as Shop)
           );
         setShops(shopList);
-        await fetchExpiredShops(shopList);
       },
       error => {
         console.error("Firestore 'shops' subscription error: ", error);
@@ -245,8 +212,7 @@ export default function EditorPage() {
             shop.groups.some(groupId => selectedGroups.includes(groupId))
         );
     
-    // Filter out suspended and expired shops
-    return allRecipients.filter(shop => shop.status === 'active' && !expiredShopIds.has(shop.id));
+    return allRecipients.filter(shop => shop.status === 'active');
   };
 
   const generateBannersForRecipients = async (recipients: Shop[]) => {
@@ -269,7 +235,9 @@ export default function EditorPage() {
                 const generatedBannerUri = await generateImageForShop(
                 bannerImage,
                 elements,
-                shop
+                shop,
+                useBorder,
+                borderWidth
                 );
                 return { ...shop, bannerDataUri: generatedBannerUri, bannerFileName: bannerFileName || 'banner' };
             })
@@ -509,6 +477,10 @@ export default function EditorPage() {
             setEmailSubject={setEmailSubject}
             emailBody={emailBody}
             setEmailBody={setEmailBody}
+            useBorder={useBorder}
+            setUseBorder={setUseBorder}
+            borderWidth={borderWidth}
+            setBorderWidth={setBorderWidth}
           />
         </ClientOnly>
       </main>

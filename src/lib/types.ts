@@ -12,12 +12,13 @@ export interface Shop {
   phone?: string;
   groups: string[]; // Array of group IDs
   status: 'active' | 'suspended';
-  duration?: number | null; // Subscription duration in days
   instagram?: string;
   facebook?: string;
   youtube?: string;
   website?: string;
   products?: Product[];
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 export interface Group {

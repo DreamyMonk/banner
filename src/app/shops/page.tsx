@@ -8,10 +8,6 @@ import {
   getFirestore,
   QuerySnapshot,
   DocumentData,
-  query,
-  where,
-  getDocs,
-  Timestamp,
 } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -60,12 +56,10 @@ import {
   Search,
   CheckCircle,
   XCircle,
-  Clock,
   Ban,
   PlayCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
 const initialShopState: Omit<Shop, 'id'> = {
   name: '',
@@ -75,15 +69,15 @@ const initialShopState: Omit<Shop, 'id'> = {
   address: '',
   phone: '',
   status: 'active',
-  duration: null,
   instagram: '',
   facebook: '',
   youtube: '',
   website: '',
   products: [],
+  borderColor: '#000000',
 };
 
-type FilterStatus = 'all' | 'active' | 'suspended' | 'expired';
+type FilterStatus = 'all' | 'active' | 'suspended';
 
 export default function ShopsPage() {
   const { toast } = useToast();
@@ -95,7 +89,6 @@ export default function ShopsPage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<FilterStatus>('all');
-  const [expiredShopIds, setExpiredShopIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [editingGroupName, setEditingGroupName] = useState('');
@@ -103,44 +96,13 @@ export default function ShopsPage() {
   useEffect(() => {
     const db = getFirestore(app);
 
-    const fetchExpiredShops = async (allShops: Shop[]) => {
-      const q = query(collection(db, 'sharedBanners'));
-      const querySnapshot = await getDocs(q);
-      const now = new Date();
-      const expiredIds = new Set<string>();
-
-      const shopPhoneMap = new Map<string, string>();
-      allShops.forEach(s => {
-        if (s.phone) shopPhoneMap.set(s.phone, s.id)
-      });
-      
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        const createdAt = (data.createdAt as Timestamp)?.toDate();
-        const duration = data.duration;
-        const phone = data.phone;
-
-        if (createdAt && typeof duration === 'number' && phone) {
-          const expirationDate = new Date(createdAt);
-          expirationDate.setDate(expirationDate.getDate() + duration);
-          if (now > expirationDate) {
-            const shopId = shopPhoneMap.get(phone);
-            if(shopId) expiredIds.add(shopId);
-          }
-        }
-      });
-      setExpiredShopIds(expiredIds);
-    };
-
-
     const unsubShops = onSnapshot(
       collection(db, 'shops'),
-      async (snapshot: QuerySnapshot<DocumentData>) => {
+      (snapshot: QuerySnapshot<DocumentData>) => {
         const shopList = snapshot.docs.map(
           doc => ({ ...doc.data(), id: doc.id } as Shop)
         );
         setShops(shopList);
-        await fetchExpiredShops(shopList); // Re-check expirations when shops change
         setIsLoading(false);
       },
       (error) => {
@@ -175,12 +137,12 @@ export default function ShopsPage() {
         address: isEditing.address || '',
         phone: isEditing.phone || '',
         status: isEditing.status || 'active',
-        duration: isEditing.duration || null,
         instagram: isEditing.instagram || '',
         facebook: isEditing.facebook || '',
         youtube: isEditing.youtube || '',
         website: isEditing.website || '',
         products: isEditing.products || [],
+        borderColor: isEditing.borderColor || '#000000',
       });
         setLogoPreview(isEditing.logo || null);
     } else {
@@ -193,21 +155,18 @@ export default function ShopsPage() {
     return shops
       .filter(shop => {
         if (filter === 'all') return true;
-        if (filter === 'active') return shop.status === 'active' && !expiredShopIds.has(shop.id);
-        if (filter === 'suspended') return shop.status === 'suspended';
-        if (filter === 'expired') return expiredShopIds.has(shop.id);
-        return true;
+        return shop.status === filter;
       })
       .filter(shop =>
         shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         shop.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (shop.phone && shop.phone.includes(searchTerm))
       );
-  }, [shops, searchTerm, filter, expiredShopIds]);
+  }, [shops, searchTerm, filter]);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { id, value, type } = e.target;
-    setFormData(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleGroupChange = (value: string) => {
@@ -426,7 +385,6 @@ export default function ShopsPage() {
                     <Button variant={filter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('all')}>All</Button>
                     <Button variant={filter === 'active' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('active')}><CheckCircle className="mr-2 h-4 w-4 text-green-500" />Active</Button>
                     <Button variant={filter === 'suspended' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('suspended')}><XCircle className="mr-2 h-4 w-4 text-red-500" />Suspended</Button>
-                    <Button variant={filter === 'expired' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('expired')}><Clock className="mr-2 h-4 w-4 text-orange-500" />Expired</Button>
                 </div>
             </div>
           </CardHeader>
@@ -449,15 +407,12 @@ export default function ShopsPage() {
                       <TableCell colSpan={6} className="text-center">Loading shops...</TableCell>
                     </TableRow>
                   ) : filteredShops.map(shop => {
-                    const isExpired = expiredShopIds.has(shop.id);
                     return (
                         <TableRow key={shop.id}>
                         <TableCell className="font-medium">{shop.name}</TableCell>
                         <TableCell>{shop.email}</TableCell>
                         <TableCell>
-                            {isExpired ? (
-                                <Badge variant="destructive"><Clock className="mr-1" />Expired</Badge>
-                            ) : shop.status === 'active' ? (
+                            {shop.status === 'active' ? (
                                 <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle className="mr-1" />Active</Badge>
                             ) : (
                                 <Badge variant="destructive"><XCircle className="mr-1" />Suspended</Badge>
@@ -595,13 +550,12 @@ export default function ShopsPage() {
                    onChange={handleInputChange}
                  />
                </div>
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="duration">Duration (days)</Label>
+               <div className="grid w-full items-center gap-1.5">
+                <Label htmlFor="borderColor">Border Color</Label>
                 <Input
-                  id="duration"
-                  type="number"
-                  placeholder="Leave empty for infinite"
-                  value={formData.duration ?? ''}
+                  id="borderColor"
+                  type="color"
+                  value={formData.borderColor ?? '#000000'}
                   onChange={handleInputChange}
                 />
               </div>
@@ -660,8 +614,7 @@ export default function ShopsPage() {
                 <Label>Groups</Label>
                 <Select
                   value={(formData.groups && formData.groups[0]) || 'none'}
-                  onValueChange={handleGroupChange}
-                >
+                  onValueChange={handleGroupChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Assign to a group" />
                   </SelectTrigger>

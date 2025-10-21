@@ -13,7 +13,9 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export async function generateImageForShop(
   baseBannerSrc: string,
   elements: BannerElement[],
-  shop: Shop
+  shop: Shop,
+  useBorder: boolean,
+  borderWidth: number
 ): Promise<string> {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -27,6 +29,12 @@ export async function generateImageForShop(
 
   // Draw base banner
   ctx.drawImage(baseImage, 0, 0);
+  
+  if (useBorder && shop.borderColor) {
+    ctx.strokeStyle = shop.borderColor;
+    ctx.lineWidth = borderWidth;
+    ctx.strokeRect(borderWidth / 2, borderWidth / 2, canvas.width - borderWidth, canvas.height - borderWidth);
+  }
 
   // Draw elements from bottom to top
   for (const element of elements) {
@@ -46,7 +54,15 @@ export async function generateImageForShop(
         const aspectRatio = logoImage.width / logoImage.height;
         const height = width / aspectRatio;
         ctx.drawImage(logoImage, -width / 2, -height / 2, width, height);
-
+    } else if (element.type.startsWith('product')) {
+        const productIndex = parseInt(element.type.replace('product', ''), 10) - 1;
+        if (shop.products && shop.products[productIndex] && shop.products[productIndex].image) {
+            const productImage = await loadImage(shop.products[productIndex].image);
+            const width = (element.scale / 100) * canvas.width;
+            const aspectRatio = productImage.width / productImage.height;
+            const height = width / aspectRatio;
+            ctx.drawImage(productImage, -width / 2, -height / 2, width, height);
+        }
     } else if (element.type === 'text' && element.text) {
         const fontSize = (element.scale / 100) * (canvas.width / 20);
         ctx.font = `${element.fontWeight || 400} ${fontSize}px "${element.fontFamily || 'Roboto'}", sans-serif`;
